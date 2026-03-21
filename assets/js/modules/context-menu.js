@@ -1,0 +1,164 @@
+/**
+ * 右键菜单模块
+ * 
+ * 负责管理画布上的右键菜单。
+ * 
+ * 主要功能：
+ * - 显示/隐藏右键菜单
+ * - 处理菜单项操作（复制、粘贴、删除、退出等）
+ * 
+ * 菜单项说明：
+ * - 上移一层：将元素在图层中上移
+ * - 下移一层：将元素在图层中下移
+ * - 复制：复制选中元素到剪贴板
+ * - 粘贴：从剪贴板粘贴元素
+ * - 重置：重置元素到初始状态
+ * - 超链接：设置元素链接
+ * - 删除：删除选中元素
+ * - 退出：关闭应用程序（通过后端）
+ */
+
+const ContextMenu = {
+    /** @type {string|null} 当前操作的元素ID */
+    elementId: null,
+
+    /**
+     * 显示右键菜单
+     * 
+     * @param {number} x - 菜单显示的X坐标
+     * @param {number} y - 菜单显示的Y坐标
+     * @param {string|null} elementId - 当前操作的元素ID
+     */
+    show(x, y, elementId) {
+        const menu = document.getElementById('context-menu');
+        if (!menu) return;
+        
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+        menu.classList.remove('hidden');
+        this.elementId = elementId;
+    },
+
+    /**
+     * 隐藏右键菜单
+     */
+    hide() {
+        const menu = document.getElementById('context-menu');
+        if (menu) menu.classList.add('hidden');
+    },
+
+    /**
+     * 绑定事件处理器
+     * 
+     * @param {EditorStore} store - 状态管理实例
+     */
+    bindEvents(store) {
+        // 为所有菜单项绑定点击事件
+        document.querySelectorAll('.context-item').forEach(btn => {
+            btn.addEventListener('click', () => this.handleAction(btn.dataset.action, store));
+        });
+
+        // 点击其他区域时隐藏菜单
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.context-menu') && !e.target.closest('.canvas-wrapper')) {
+                this.hide();
+            }
+        });
+    },
+
+    /**
+     * 处理菜单项操作
+     * 
+     * @param {string} action - 操作类型
+     * @param {EditorStore} store - 状态管理实例
+     */
+    handleAction(action, store) {
+        const state = store.getState();
+        
+        switch (action) {
+            case 'bring-forward':
+                // 上移一层
+                if (this.elementId) {
+                    store.reorderElement(state.activeSlideId, this.elementId, 'up');
+                }
+                break;
+                
+            case 'send-backward':
+                // 下移一层
+                if (this.elementId) {
+                    store.reorderElement(state.activeSlideId, this.elementId, 'down');
+                }
+                break;
+                
+            case 'copy':
+                // 复制元素
+                if (this.elementId) {
+                    const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+                    const element = slide?.elements.find(e => e.id === this.elementId);
+                    if (element) store.copyElement(element);
+                }
+                break;
+                
+            case 'paste':
+                // 粘贴元素
+                store.pasteElement(state.activeSlideId);
+                break;
+                
+            case 'reset':
+                // 重置元素
+                if (this.elementId) {
+                    store.resetElement(state.activeSlideId, this.elementId);
+                }
+                break;
+                
+            case 'hyperlink':
+                // 设置超链接
+                if (this.elementId) {
+                    const slideEl = state.presentation.slides.find(s => s.id === state.activeSlideId);
+                    const el = slideEl?.elements.find(e => e.id === this.elementId);
+                    if (el && window.LinkModal) {
+                        window.LinkModal.open(el.style.link || '', (value) => {
+                            store.updateElement(state.activeSlideId, this.elementId, { style: { link: value } });
+                        });
+                    }
+                }
+                break;
+                
+            case 'delete':
+                // 删除元素
+                if (this.elementId) {
+                    store.deleteElement(state.activeSlideId, this.elementId);
+                }
+                break;
+                
+            case 'exit':
+                // 退出应用程序
+                this.exitApplication();
+                break;
+        }
+        
+        this.hide();
+    },
+
+    /**
+     * 退出应用程序
+     * 
+     * 尝试通过后端关闭窗口，如果后端不可用则显示提示。
+     */
+    async exitApplication() {
+        try {
+            if (window.pyApi && typeof window.pyApi.close_window === 'function') {
+                await window.pyApi.close_window();
+            } else if (window.PyBridge && window.PyBridge.isConnected()) {
+                await window.PyBridge.call('close_window');
+            } else {
+                alert('请使用 Alt+F4 或点击窗口关闭按钮退出');
+            }
+        } catch (error) {
+            console.warn('[ContextMenu] 退出失败:', error);
+            alert('请使用 Alt+F4 或点击窗口关闭按钮退出');
+        }
+    }
+};
+
+window.ContextMenu = ContextMenu;

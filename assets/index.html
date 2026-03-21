@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML PPT 编辑器</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="libs/fabric.min.js"></script>
+    <script src="libs/qwebchannel.js"></script>
+</head>
+<body>
+    <div id="welcome-page" class="welcome-page">
+        <div class="welcome-header">
+            <h1 class="welcome-greeting" id="welcome-greeting">你好</h1>
+            <p class="welcome-subtitle">开始创建精彩的演示文稿</p>
+        </div>
+        
+        <div class="welcome-actions">
+            <button id="welcome-new" class="welcome-btn primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                新建演示文稿
+            </button>
+            <button id="welcome-open" class="welcome-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                打开文件
+            </button>
+        </div>
+        
+        <div class="welcome-section">
+            <h2 class="welcome-section-title">最近文件</h2>
+            <div id="recent-files-grid" class="recent-files-grid"></div>
+        </div>
+    </div>
+    
+    <div id="app" class="app-container">
+        <header class="toolbar">
+            <div class="toolbar-brand">HTML PPT</div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button id="btn-undo" class="toolbar-btn icon-only" title="撤销 (Ctrl+Z)" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 7"/>
+                    </svg>
+                </button>
+                <button id="btn-redo" class="toolbar-btn icon-only" title="重做 (Ctrl+Y)" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 7"/>
+                    </svg>
+                </button>
+                <button id="btn-align" class="toolbar-btn icon-only" title="对齐工具">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-dropdown">
+                <button class="toolbar-btn dropdown-trigger">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>
+                    </svg>
+                    <span data-i18n="toolbar.text">文本</span>
+                    <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" data-action="add-heading">
+                        <span data-i18n="toolbar.heading">标题</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-body">
+                        <span data-i18n="toolbar.body">正文</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" data-action="add-text">
+                        <span data-i18n="toolbar.pureText">纯文本</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="toolbar-dropdown">
+                <button class="toolbar-btn dropdown-trigger">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    </svg>
+                    <span data-i18n="toolbar.shapes">形状</span>
+                    <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" data-action="add-rectangle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                        <span data-i18n="toolbar.rectangle">矩形</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-square">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/></svg>
+                        <span data-i18n="toolbar.square">正方形</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-circle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+                        <span data-i18n="toolbar.circle">圆形</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-triangle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 3 22 21 2 21"/></svg>
+                        <span data-i18n="toolbar.triangle">三角形</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-line">
+                        <div style="width:14px;height:2px;background:currentColor;transform:rotate(-45deg)"></div>
+                        <span data-i18n="toolbar.line">线条</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-star">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <span data-i18n="toolbar.star">星形</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-polygon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
+                        <span data-i18n="toolbar.polygon">多边形</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="toolbar-dropdown">
+                <button class="toolbar-btn dropdown-trigger">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span data-i18n="toolbar.insert">插入</span>
+                    <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" data-action="add-image">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>图片</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-album">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span data-i18n="toolbar.album">相册</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-screenshot">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span data-i18n="toolbar.screenshot">截图</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" data-action="add-video">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        <span>视频</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-audio">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <span>音频</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" data-action="add-table">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+                        <span data-i18n="toolbar.table">表格</span>
+                    </button>
+                    <button class="dropdown-item" data-action="add-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                        <span data-i18n="toolbar.icon">图标</span>
+                    </button>
+                </div>
+            </div>
+            
+            <button id="btn-add-button" class="toolbar-btn" title="添加按钮">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
+                </svg>
+                <span data-i18n="toolbar.button">按钮</span>
+            </button>
+            
+            <div class="toolbar-spacer"></div>
+            
+            <button id="btn-shortcuts" class="toolbar-btn icon-only" title="快捷键">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
+                </svg>
+            </button>
+            
+            <button id="btn-language" class="toolbar-btn icon-only" title="切换语言">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <span id="lang-label">ZH</span>
+            </button>
+            
+            <div class="toolbar-dropdown">
+                <button class="toolbar-btn dropdown-trigger">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span data-i18n="toolbar.window">窗口</span>
+                    <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" data-action="toggle-left">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg>
+                        <span data-i18n="toolbar.toggleLeftPanel">左侧栏</span>
+                    </button>
+                    <button class="dropdown-item" data-action="toggle-bottom">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="7"/><rect x="3" y="14" width="18" height="7"/></svg>
+                        <span data-i18n="toolbar.toggleBottomPanel">底部栏</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-header">属性面板</div>
+                    <button class="dropdown-item" data-action="panel-top">
+                        <span class="status-dot" id="dot-panel-top"></span>
+                        <span>顶部栏</span>
+                    </button>
+                    <button class="dropdown-item" data-action="panel-right">
+                        <span class="status-dot" id="dot-panel-right"></span>
+                        <span>右侧栏</span>
+                    </button>
+                    <button class="dropdown-item" data-action="panel-hidden">
+                        <span class="status-dot" id="dot-panel-hidden"></span>
+                        <span>隐藏</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-header">编辑设置</div>
+                    <button class="dropdown-item" data-action="toggle-smart-guides">
+                        <span class="status-dot active" id="dot-smart-guides"></span>
+                        <span>智能参考线</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-header">放映设置</div>
+                    <button class="dropdown-item" data-action="toggle-click-advance">
+                        <span class="status-dot active" id="dot-click-advance"></span>
+                        <span>点击切换</span>
+                    </button>
+                    <button class="dropdown-item" data-action="toggle-space-advance">
+                        <span class="status-dot active" id="dot-space-advance"></span>
+                        <span>空格下一页</span>
+                    </button>
+                    <button class="dropdown-item" data-action="toggle-animation">
+                        <span class="status-dot active" id="dot-animation"></span>
+                        <span>启用动画</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" data-action="export-pdf">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span data-i18n="toolbar.exportPdf">导出 PDF</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <button id="btn-preview" class="toolbar-btn primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span data-i18n="toolbar.preview">放映</span>
+            </button>
+        </header>
+        
+        <div id="property-panel-top" class="property-panel property-panel-top hidden">
+            <div class="property-panel-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span data-i18n="toolbar.tools">工具</span>
+                <button id="btn-close-panel-top" class="panel-close-btn" title="关闭">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="property-panel-top-content" class="property-panel-content horizontal"></div>
+        </div>
+        
+        <div class="main-content">
+            <aside id="left-panel" class="sidebar-left">
+                <div class="panel-header">
+                    <span class="panel-title" data-i18n="panels.slides">幻灯片</span>
+                    <div class="panel-actions">
+                        <button id="btn-add-slide" class="panel-btn" title="添加幻灯片">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </button>
+                        <button id="btn-close-left" class="panel-btn" title="关闭">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="slides-list" class="slides-list"></div>
+            </aside>
+            
+            <div class="canvas-container">
+                <div id="canvas-area" class="canvas-area">
+                    <div class="canvas-wrapper">
+                        <canvas id="canvas"></canvas>
+                    </div>
+                    <div class="canvas-toolbar">
+                        <button id="btn-canvas-settings" class="canvas-tool-btn" title="设置">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            </svg>
+                        </button>
+                        <button id="btn-canvas-layers" class="canvas-tool-btn" title="图层">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+                            </svg>
+                        </button>
+                        <span id="zoom-level" class="zoom-level">100%</span>
+                        <button id="btn-canvas-close" class="canvas-tool-btn" title="关闭面板">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="bottom-panel" class="bottom-panel hidden">
+                    <div class="panel-header">
+                        <span class="panel-title" data-i18n="panels.code">JSON 数据</span>
+                        <button id="btn-close-bottom" class="panel-btn" title="关闭">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <textarea id="code-editor" class="code-editor" spellcheck="false"></textarea>
+                </div>
+            </div>
+            
+            <aside id="right-panel" class="sidebar-right hidden">
+                <div class="panel-header">
+                    <span class="panel-title" data-i18n="panels.properties">属性</span>
+                    <button id="btn-close-right" class="panel-btn" title="关闭">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="property-panel-content" class="property-panel-content vertical"></div>
+            </aside>
+        </div>
+        
+        <div id="alignment-panel" class="alignment-panel hidden">
+            <div class="alignment-section">
+                <div class="alignment-section-title">对齐到画布</div>
+                <div class="alignment-grid">
+                    <button class="align-btn" data-align="top-left" title="左上角">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="8" height="8"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="15" y1="3" x2="15" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="top-center" title="顶部居中">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="8" y="3" width="8" height="8"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="top-right" title="右上角">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="13" y="3" width="8" height="8"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="middle-left" title="左侧居中">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="8" width="8" height="8"/><line x1="3" y1="3" x2="21" y2="3"/><line x1="15" y1="3" x2="15" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="center-middle" title="正中心">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="8" y="8" width="8" height="8"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="middle-right" title="右侧居中">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="13" y="8" width="8" height="8"/><line x1="3" y1="3" x2="21" y2="3"/><line x1="9" y1="3" x2="9" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="bottom-left" title="左下角">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="13" width="8" height="8"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="15" y1="3" x2="15" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="bottom-center" title="底部居中">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="8" y="13" width="8" height="8"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="12" y1="3" x2="12" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="bottom-right" title="右下角">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="13" y="13" width="8" height="8"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="alignment-divider"></div>
+            <div class="alignment-section">
+                <div class="alignment-section-title">分布对齐</div>
+                <div class="alignment-grid">
+                    <button class="align-btn" data-align="left" title="左对齐">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="center" title="水平居中">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="right" title="右对齐">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="top" title="顶对齐">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="3" x2="12" y2="15"/><line x1="18" y1="3" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="middle" title="垂直居中">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="18" y1="3" x2="18" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="bottom" title="底对齐">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="9" x2="12" y2="21"/><line x1="18" y1="6" x2="18" y2="21"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="context-menu" class="context-menu hidden">
+            <button class="context-item" data-action="bring-forward">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                <span data-i18n="contextMenu.bringForward">上移一层</span>
+            </button>
+            <button class="context-item" data-action="send-backward">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <span data-i18n="contextMenu.sendBackward">下移一层</span>
+            </button>
+            <div class="context-divider"></div>
+            <button class="context-item" data-action="copy">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span data-i18n="contextMenu.copy">复制</span>
+            </button>
+            <button class="context-item" data-action="paste">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                <span data-i18n="contextMenu.paste">粘贴</span>
+            </button>
+            <button class="context-item" data-action="reset">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span data-i18n="contextMenu.reset">重置</span>
+            </button>
+            <button class="context-item" data-action="hyperlink">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span data-i18n="contextMenu.hyperlink">超链接</span>
+            </button>
+            <div class="context-divider"></div>
+            <button class="context-item danger" data-action="delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <span data-i18n="contextMenu.delete">删除</span>
+            </button>
+            <div class="context-divider"></div>
+            <button class="context-item" data-action="exit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="contextMenu.exit">退出</span>
+            </button>
+        </div>
+    </div>
+    
+    <div id="preview-overlay" class="preview-overlay hidden">
+        <div class="preview-click-zone preview-click-left" id="preview-click-left">
+            <div class="preview-click-hint">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </div>
+        </div>
+        <div class="preview-slide" id="preview-slide"></div>
+        <div class="preview-click-zone preview-click-right" id="preview-click-right">
+            <div class="preview-click-hint">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </div>
+        </div>
+        <div class="preview-controls" id="preview-controls">
+            <button id="btn-prev-slide" class="preview-btn" title="上一页">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </button>
+            <div class="preview-slide-counter">
+                <span id="preview-current">1</span>
+                <span class="preview-divider">/</span>
+                <span id="preview-total">1</span>
+            </div>
+            <button id="btn-next-slide" class="preview-btn" title="下一页">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </button>
+            <div class="preview-controls-divider"></div>
+            <button id="btn-exit-preview" class="preview-btn exit" title="退出放映 (Esc)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <div id="link-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>设置链接</h3>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab active" data-tab="url">网址 / 媒体</button>
+                    <button class="modal-tab" data-tab="slide">幻灯片</button>
+                </div>
+                <div id="tab-url" class="tab-content">
+                    <label class="form-label">URL</label>
+                    <input type="text" id="link-url" class="form-input" placeholder="https://...">
+                    <p class="form-hint">输入网站 URL 或媒体链接</p>
+                </div>
+                <div id="tab-slide" class="tab-content hidden">
+                    <label class="form-label">选择幻灯片</label>
+                    <select id="link-slide" class="form-select"></select>
+                    <p class="form-hint">跳转到演示文稿中的其他幻灯片</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-cancel-link" class="btn btn-secondary">取消</button>
+                <button id="btn-save-link" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="shortcuts-modal" class="modal hidden">
+        <div class="modal-content shortcuts-content">
+            <div class="modal-header">
+                <h3>快捷键</h3>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">撤销</span>
+                        <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">重做</span>
+                        <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">删除元素</span>
+                        <span class="shortcut-keys"><kbd>Delete</kbd> / <kbd>Backspace</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">退出放映</span>
+                        <span class="shortcut-keys"><kbd>Esc</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">下一页（放映中）</span>
+                        <span class="shortcut-keys"><kbd>→</kbd> / <kbd>Space</kbd> / <kbd>Click</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">上一页（放映中）</span>
+                        <span class="shortcut-keys"><kbd>←</kbd> / <kbd>Right Click</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">缩放画布</span>
+                        <span class="shortcut-keys"><kbd>Alt</kbd>+<kbd>Scroll</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">复制元素</span>
+                        <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>C</kbd></span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">粘贴元素</span>
+                        <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>V</kbd></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-close-shortcuts" class="btn btn-primary">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/modules/translations.js"></script>
+    <script src="js/modules/store.js"></script>
+    <script src="js/modules/pybridge.js"></script>
+    <script src="js/modules/storage.js"></script>
+    <script src="js/modules/link-modal.js"></script>
+    <script src="js/modules/context-menu.js"></script>
+    <script src="js/modules/canvas.js"></script>
+    <script src="js/modules/property-panel.js"></script>
+    <script src="js/modules/slides-panel.js"></script>
+    <script src="js/modules/preview.js"></script>
+    <script src="js/modules/toolbar.js"></script>
+    <script src="js/modules/welcome.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "name": "HTML PPT Editor",
+  "description": "A web-based presentation editor with a visual canvas, code editor, and property panel.",
+  "requestFramePermissions": []
+}

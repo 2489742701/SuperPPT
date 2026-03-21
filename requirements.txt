@@ -1,0 +1,4 @@
+PyQt6>=6.0
+PyQt6-WebEngine>=6.0
+jinja2>=3.0
+pyinstaller>=6.0
