@@ -482,6 +482,32 @@ const PropertyPanel = {
             });
         });
         
+        // 打组按钮事件
+        const groupBtn = document.querySelector('[data-action="group-elements"]');
+        if (groupBtn) {
+            groupBtn.addEventListener('click', () => {
+                const selectedIds = state.selectedElementIds || [];
+                if (selectedIds.length >= 2) {
+                    store.groupElements(state.activeSlideId, selectedIds);
+                }
+            });
+        }
+        
+        // 解组按钮事件
+        const ungroupBtn = document.querySelector('[data-action="ungroup-elements"]');
+        if (ungroupBtn) {
+            ungroupBtn.addEventListener('click', () => {
+                const currentElementId = state.activeElementId;
+                if (currentElementId) {
+                    const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+                    const element = slide?.elements.find(e => e.id === currentElementId);
+                    if (element && element.type === 'group') {
+                        store.ungroupElement(state.activeSlideId, currentElementId);
+                    }
+                }
+            });
+        }
+        
         // 母版选择器事件
         const masterSelect = document.getElementById('slide-master-select');
         if (masterSelect) {

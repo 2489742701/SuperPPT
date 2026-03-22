@@ -149,6 +149,13 @@ class PPTEditor {
         console.log('[PPTEditor] 触发初始渲染...');
         this.store.notify();
         
+        // 等待画布渲染完成后，保存初始幻灯片的快照
+        setTimeout(() => {
+            if (window.SlidesPanel && this.store.activeSlideId) {
+                window.SlidesPanel.saveSnapshot(this.store.activeSlideId);
+            }
+        }, 500);
+        
         console.log('[PPTEditor] 编辑器初始化完成');
     }
 
@@ -421,6 +428,39 @@ class PPTEditor {
             if (e.key === 'Escape') {
                 this.store.setPreview(false);
                 ContextMenu.hide();
+            }
+            
+            // Ctrl/Cmd + G: 打组
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') {
+                e.preventDefault();
+                const state = this.store.getState();
+                if (state.selectedElementIds && state.selectedElementIds.length >= 2) {
+                    this.store.groupElements(state.activeSlideId, state.selectedElementIds);
+                } else {
+                    const activeObj = CanvasManager.canvas?.getActiveObject();
+                    if (activeObj && activeObj.type === 'activeSelection') {
+                        const ids = activeObj.getObjects()
+                            .filter(o => o.elementId)
+                            .map(o => o.elementId);
+                        if (ids.length >= 2) {
+                            this.store.groupElements(state.activeSlideId, ids);
+                        }
+                    }
+                }
+            }
+            
+            // Ctrl/Cmd + Shift + G: 解组
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'g') {
+                e.preventDefault();
+                const state = this.store.getState();
+                const currentElementId = state.activeElementId;
+                if (currentElementId) {
+                    const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+                    const element = slide?.elements.find(el => el.id === currentElementId);
+                    if (element && element.type === 'group') {
+                        this.store.ungroupElement(state.activeSlideId, currentElementId);
+                    }
+                }
             }
         });
     }

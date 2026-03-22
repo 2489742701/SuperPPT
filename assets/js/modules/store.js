@@ -29,6 +29,20 @@ class EditorStore {
         this.askForLayout = true;
     }
 
+    /**
+     * 检查元素是否被锁定
+     * @param {string} slideId - 幻灯片ID
+     * @param {string} elementId - 元素ID
+     * @returns {boolean} 元素是否锁定
+     */
+    isElementLocked(slideId, elementId) {
+        if (!slideId || !elementId) return false;
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return false;
+        const element = slide.elements.find(e => e.id === elementId);
+        return element && element.locked;
+    }
+
     createInitialPresentation() {
         const slideId = generateId();
         return {
@@ -353,6 +367,12 @@ class EditorStore {
         newSlide.id = generateId();
         newSlide.elements.forEach(el => el.id = generateId());
         this.presentation.slides.splice(index + 1, 0, newSlide);
+        
+        // 复制缩略图快照
+        if (window.SlidesPanel && window.SlidesPanel.snapshots && window.SlidesPanel.snapshots[id]) {
+            window.SlidesPanel.snapshots[newSlide.id] = window.SlidesPanel.snapshots[id];
+        }
+        
         this.pushHistory();
         this.activeSlideId = newSlide.id;
         this.activeElementId = null;
@@ -387,6 +407,7 @@ class EditorStore {
     }
 
     updateElement(slideId, elementId, updates) {
+        if (this.isElementLocked(slideId, elementId)) return;
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
         const element = slide.elements.find(e => e.id === elementId);
@@ -424,6 +445,7 @@ class EditorStore {
     }
 
     deleteElement(slideId, elementId, forceDelete = false) {
+        if (this.isElementLocked(slideId, elementId)) return;
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
         
@@ -482,6 +504,7 @@ class EditorStore {
     }
 
     reorderElement(slideId, elementId, direction) {
+        if (this.isElementLocked(slideId, elementId)) return;
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
         const index = slide.elements.findIndex(e => e.id === elementId);
@@ -496,6 +519,9 @@ class EditorStore {
     }
 
     selectElement(id) {
+        if (id && this.isElementLocked(this.activeSlideId, id)) {
+            return;
+        }
         this.activeElementId = id;
         this.selectedElementIds = [];
         if (id && !this.userClosedPropertyPanel && this.panels.propertyPanelPosition === 'hidden') {
@@ -505,8 +531,11 @@ class EditorStore {
     }
 
     setMultiSelection(elementIds) {
+        const filteredIds = (elementIds || []).filter(id => 
+            !this.isElementLocked(this.activeSlideId, id)
+        );
         this.activeElementId = null;
-        this.selectedElementIds = elementIds || [];
+        this.selectedElementIds = filteredIds;
         this.notify();
     }
 
@@ -525,6 +554,7 @@ class EditorStore {
         const newElement = {
             ...this.clipboard,
             id: generateId(),
+            locked: false,
             style: { ...this.clipboard.style, x: this.clipboard.style.x + 20, y: this.clipboard.style.y + 20 }
         };
         const slide = this.presentation.slides.find(s => s.id === slideId);
@@ -536,6 +566,7 @@ class EditorStore {
     }
 
     resetElement(slideId, elementId) {
+        if (this.isElementLocked(slideId, elementId)) return;
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
         const element = slide.elements.find(e => e.id === elementId);
@@ -550,6 +581,33 @@ class EditorStore {
     alignElements(slideId, elementIds, type) {
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
+        
+        // 过滤掉锁定元素
+        const filteredIds = (elementIds || []).filter(id => 
+            !this.isElementLocked(slideId, id)
+        );
+        if (filteredIds.length < 2) return;
+        elementIds = filteredIds;
+        
+        // 【关键】先从 Fabric.js 画布同步元素的最新位置到 store
+        // 这样即使元素在多选组中，我们也能获取到它们的实际位置
+        if (window.CanvasManager && window.CanvasManager.canvas) {
+            const canvas = window.CanvasManager.canvas;
+            const fabricObjects = canvas.getObjects().filter(obj => obj.elementId);
+            
+            fabricObjects.forEach(fabricObj => {
+                const element = slide.elements.find(e => e.id === fabricObj.elementId);
+                if (element) {
+                    // 从 Fabric.js 对象同步最新位置
+                    element.style.x = fabricObj.left;
+                    element.style.y = fabricObj.top;
+                }
+            });
+            
+            // 强制解散多选组
+            canvas.discardActiveObject();
+        }
+        
         const canvasWidth = 1200, canvasHeight = 675;
         slide.elements.forEach(e => {
             if (!elementIds.includes(e.id)) return;
@@ -584,7 +642,30 @@ class EditorStore {
      */
     distributeElements(slideId, elementIds, type) {
         const slide = this.presentation.slides.find(s => s.id === slideId);
-        if (!slide || elementIds.length < 3) return;
+        if (!slide) return;
+        
+        // 过滤掉锁定元素
+        const filteredIds = (elementIds || []).filter(id => 
+            !this.isElementLocked(slideId, id)
+        );
+        if (filteredIds.length < 3) return;
+        elementIds = filteredIds;
+        
+        // 【关键】先从 Fabric.js 画布同步元素的最新位置到 store
+        if (window.CanvasManager && window.CanvasManager.canvas) {
+            const canvas = window.CanvasManager.canvas;
+            const fabricObjects = canvas.getObjects().filter(obj => obj.elementId);
+            
+            fabricObjects.forEach(fabricObj => {
+                const element = slide.elements.find(e => e.id === fabricObj.elementId);
+                if (element) {
+                    element.style.x = fabricObj.left;
+                    element.style.y = fabricObj.top;
+                }
+            });
+            
+            canvas.discardActiveObject();
+        }
         
         // 获取所有要分布的元素
         const elements = slide.elements.filter(e => elementIds.includes(e.id));
@@ -627,6 +708,132 @@ class EditorStore {
 
     toggleAlignment() {
         this.showAlignment = !this.showAlignment;
+        this.notify();
+    }
+    
+    groupElements(slideId, elementIds) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        // 过滤掉锁定的元素
+        const filteredIds = (elementIds || []).filter(id => 
+            !this.isElementLocked(slideId, id)
+        );
+        if (filteredIds.length < 2) return;
+        elementIds = filteredIds;
+        
+        const elementsToGroup = slide.elements.filter(e => elementIds.includes(e.id));
+        if (elementsToGroup.length < 2) return;
+        
+        const groupId = generateId();
+        
+        let minX = Infinity, minY = Infinity;
+        let maxX = -Infinity, maxY = -Infinity;
+        
+        elementsToGroup.forEach(el => {
+            const x = el.style.x || 0;
+            const y = el.style.y || 0;
+            const w = el.style.width || 100;
+            const h = el.style.height || 50;
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x + w);
+            maxY = Math.max(maxY, y + h);
+        });
+        
+        const groupWidth = maxX - minX;
+        const groupHeight = maxY - minY;
+        
+        const groupElement = {
+            id: groupId,
+            type: 'group',
+            elements: elementsToGroup.map(el => ({
+                ...el,
+                style: {
+                    ...el.style,
+                    x: (el.style.x || 0) - minX,
+                    y: (el.style.y || 0) - minY
+                }
+            })),
+            style: {
+                x: minX,
+                y: minY,
+                width: groupWidth,
+                height: groupHeight,
+                opacity: 1,
+                strokeWidth: 0,
+                angle: 0,
+                skewX: 0,
+                skewY: 0
+            }
+        };
+        
+        slide.elements = slide.elements.filter(e => !elementIds.includes(e.id));
+        slide.elements.push(groupElement);
+        
+        this.activeElementId = groupId;
+        this.selectedElementIds = [];
+        
+        this.pushHistory();
+        this.notify();
+    }
+    
+    ungroupElement(slideId, groupId) {
+        if (this.isElementLocked(slideId, groupId)) return;
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        const groupIndex = slide.elements.findIndex(e => e.id === groupId && e.type === 'group');
+        if (groupIndex === -1) return;
+        
+        const groupElement = slide.elements[groupIndex];
+        if (!groupElement.elements || groupElement.elements.length === 0) return;
+        
+        const groupX = groupElement.style.x || 0;
+        const groupY = groupElement.style.y || 0;
+        
+        const ungroupedElements = groupElement.elements.map(el => ({
+            ...el,
+            style: {
+                ...el.style,
+                x: (el.style.x || 0) + groupX,
+                y: (el.style.y || 0) + groupY
+            }
+        }));
+        
+        slide.elements.splice(groupIndex, 1);
+        slide.elements.push(...ungroupedElements);
+        
+        this.activeElementId = null;
+        this.selectedElementIds = ungroupedElements.map(e => e.id);
+        
+        this.pushHistory();
+        this.notify();
+    }
+    
+    lockElement(slideId, elementId) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        const element = slide.elements.find(e => e.id === elementId);
+        if (!element) return;
+        
+        element.locked = true;
+        
+        this.pushHistory();
+        this.notify();
+    }
+    
+    unlockElement(slideId, elementId) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        const element = slide.elements.find(e => e.id === elementId);
+        if (!element) return;
+        
+        element.locked = false;
+        
+        this.pushHistory();
         this.notify();
     }
 

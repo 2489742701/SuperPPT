@@ -41,6 +41,45 @@ const ContextMenu = {
         this.elementId = elementId;
         
         this.updateMenuItems();
+        
+        // 根据元素是否锁定显示/隐藏菜单项
+        const store = window.editor?.store;
+        const state = store?.getState();
+        let isLocked = false;
+        
+        if (state && elementId) {
+            const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+            const element = slide?.elements.find(e => e.id === elementId);
+            isLocked = element && element.locked;
+            
+            const lockBtn = menu.querySelector('[data-action="lock"]');
+            const unlockBtn = menu.querySelector('[data-action="unlock"]');
+            
+            if (isLocked) {
+                if (lockBtn) lockBtn.classList.add('hidden');
+                if (unlockBtn) unlockBtn.classList.remove('hidden');
+            } else {
+                if (lockBtn) lockBtn.classList.remove('hidden');
+                if (unlockBtn) unlockBtn.classList.add('hidden');
+            }
+        }
+        
+        // 禁用锁定元素的其他操作（除了解锁）
+        const otherActions = ['bring-forward', 'send-backward', 'copy', 'reset', 'hyperlink', 'delete', 'group', 'ungroup'];
+        otherActions.forEach(action => {
+            const btn = menu.querySelector(`[data-action="${action}"]`);
+            if (btn) {
+                if (isLocked) {
+                    btn.classList.add('disabled');
+                    btn.style.opacity = '0.5';
+                    btn.style.pointerEvents = 'none';
+                } else {
+                    btn.classList.remove('disabled');
+                    btn.style.opacity = '';
+                    btn.style.pointerEvents = '';
+                }
+            }
+        });
     },
 
     /**
@@ -122,7 +161,7 @@ const ContextMenu = {
                 if (this.elementId) {
                     const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
                     const element = slide?.elements.find(e => e.id === this.elementId);
-                    if (element) store.copyElement(element);
+                    if (element && !element.locked) store.copyElement(element);
                 }
                 break;
                 
@@ -148,6 +187,51 @@ const ContextMenu = {
                             store.updateElement(state.activeSlideId, this.elementId, { style: { link: value } });
                         });
                     }
+                }
+                break;
+                
+            case 'group':
+                // 打组
+                if (state.selectedElementIds && state.selectedElementIds.length >= 2) {
+                    store.groupElements(state.activeSlideId, state.selectedElementIds);
+                } else if (this.elementId) {
+                    const activeObj = window.CanvasManager?.canvas?.getActiveObject();
+                    if (activeObj && activeObj.type === 'activeSelection') {
+                        const ids = activeObj.getObjects()
+                            .filter(o => o.elementId)
+                            .map(o => o.elementId);
+                        if (ids.length >= 2) {
+                            store.groupElements(state.activeSlideId, ids);
+                        }
+                    }
+                }
+                break;
+                
+            case 'ungroup':
+                // 解组
+                const currentElementId = this.elementId || state.activeElementId;
+                if (currentElementId) {
+                    const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+                    const element = slide?.elements.find(e => e.id === currentElementId);
+                    if (element && element.type === 'group') {
+                        store.ungroupElement(state.activeSlideId, currentElementId);
+                    }
+                }
+                break;
+                
+            case 'lock':
+                // 锁定
+                const lockElementId = this.elementId || state.activeElementId;
+                if (lockElementId) {
+                    store.lockElement(state.activeSlideId, lockElementId);
+                }
+                break;
+                
+            case 'unlock':
+                // 解锁
+                const unlockElementId = this.elementId || state.activeElementId;
+                if (unlockElementId) {
+                    store.unlockElement(state.activeSlideId, unlockElementId);
                 }
                 break;
                 

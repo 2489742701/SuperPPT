@@ -14,7 +14,15 @@ const SlidesPanel = {
     slideHeight: 675,
     thumbnailWidth: 160,
     thumbnailHeight: 90,
-    snapshots: {},  // 存储每张幻灯片的快照 { slideId: dataURL }
+    _snapshots: {},  // 存储每张幻灯片的快照 { slideId: dataURL }
+    
+    // 对外暴露 snapshots 对象，方便复制幻灯片时复制快照
+    get snapshots() {
+        return this._snapshots;
+    },
+    set snapshots(value) {
+        this._snapshots = value;
+    },
     
     render(state, store) {
         this.store = store;
@@ -64,13 +72,10 @@ const SlidesPanel = {
     
     /**
      * 更新所有缩略图
-     * - 当前幻灯片：实时从主画布复制
-     * - 其他幻灯片：使用存储的快照
+     * - 所有幻灯片都使用存储的快照
+     * - 只在切换幻灯片时才保存新快照
      */
     updateThumbnails(state) {
-        const mainCanvas = window.CanvasManager?.canvas?.getElement();
-        if (!mainCanvas) return;
-        
         const thumbnails = document.querySelectorAll('.slide-thumbnail-canvas');
         thumbnails.forEach((thumbCanvas) => {
             try {
@@ -84,20 +89,8 @@ const SlidesPanel = {
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, this.thumbnailWidth, this.thumbnailHeight);
                 
-                if (slideId === state.activeSlideId) {
-                    // 当前幻灯片：实时复制主画布
-                    // 添加错误处理，防止画布状态不一致导致崩溃
-                    try {
-                        ctx.drawImage(
-                            mainCanvas, 
-                            0, 0, this.slideWidth, this.slideHeight,
-                            0, 0, this.thumbnailWidth, this.thumbnailHeight
-                        );
-                    } catch (err) {
-                        console.warn('[SlidesPanel] 绘制当前幻灯片缩略图失败:', err);
-                    }
-                } else if (this.snapshots[slideId]) {
-                    // 其他幻灯片：使用快照
+                if (this._snapshots[slideId]) {
+                    // 使用快照
                     const img = new Image();
                     img.onload = () => {
                         try {
@@ -109,7 +102,7 @@ const SlidesPanel = {
                     img.onerror = () => {
                         console.warn('[SlidesPanel] 加载快照图片失败:', slideId);
                     };
-                    img.src = this.snapshots[slideId];
+                    img.src = this._snapshots[slideId];
                 }
             } catch (err) {
                 console.warn('[SlidesPanel] 更新缩略图时出错:', err);
@@ -143,7 +136,7 @@ const SlidesPanel = {
             );
             
             // 存储快照
-            this.snapshots[slideId] = tempCanvas.toDataURL('image/png', 0.7);
+            this._snapshots[slideId] = tempCanvas.toDataURL('image/png', 0.7);
         } catch (err) {
             console.warn('[SlidesPanel] 保存快照失败:', err);
         }
@@ -153,7 +146,7 @@ const SlidesPanel = {
      * 删除幻灯片时清理快照
      */
     removeSnapshot(slideId) {
-        delete this.snapshots[slideId];
+        delete this._snapshots[slideId];
     },
     
     showContextMenu(e, slideId, store) {

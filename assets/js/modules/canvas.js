@@ -643,6 +643,40 @@ const CanvasManager = {
                     return;
                 }
                 
+                // 更新锁定属性
+                if (element.locked) {
+                    existingObj.set('selectable', false);
+                    existingObj.set('evented', true); // 保持 evented=true，这样可以右键点击
+                    // 完全禁用移动和调整大小
+                    existingObj.set('lockMovementX', true);
+                    existingObj.set('lockMovementY', true);
+                    existingObj.set('lockRotation', true);
+                    existingObj.set('lockScalingX', true);
+                    existingObj.set('lockScalingY', true);
+                    existingObj.set('hasControls', false);
+                    existingObj.set('hasBorders', false);
+                    if (existingObj.type !== 'group' && existingObj.type !== 'textbox' && existingObj.type !== 'i-text') {
+                        existingObj.set('stroke', '#9ca3af');
+                        existingObj.set('strokeWidth', 2);
+                        existingObj.set('strokeDashArray', [5, 5]);
+                    }
+                } else {
+                    existingObj.set('selectable', true);
+                    existingObj.set('evented', true);
+                    // 启用移动和调整大小
+                    existingObj.set('lockMovementX', false);
+                    existingObj.set('lockMovementY', false);
+                    existingObj.set('lockRotation', false);
+                    existingObj.set('lockScalingX', false);
+                    existingObj.set('lockScalingY', false);
+                    existingObj.set('hasControls', true);
+                    existingObj.set('hasBorders', true);
+                    if (existingObj.type !== 'group' && existingObj.type !== 'textbox' && existingObj.type !== 'i-text') {
+                        existingObj.set('strokeWidth', 0);
+                        existingObj.set('strokeDashArray', null);
+                    }
+                }
+                
                 if (element.type === 'textbox') {
                     const isFixedMode = element.textMode === 'fixed';
                     
@@ -800,7 +834,52 @@ const CanvasManager = {
             const width = commonProps.width || 100;
             const height = commonProps.height || 50;
             
-            switch (element.type) {
+            if (element.type === 'group') {
+                const groupObjects = [];
+                const groupX = left;
+                const groupY = top;
+                
+                if (element.elements && element.elements.length > 0) {
+                    element.elements.forEach(childElement => {
+                        const childStyle = childElement.style || {};
+                        const childLeft = (childStyle.x || 0) + groupX;
+                        const childTop = (childStyle.y || 0) + groupY;
+                        const childWidth = childStyle.width || 100;
+                        const childHeight = childStyle.height || 50;
+                        
+                        const childObj = this.createFabricObject(childElement, {
+                            left: childLeft,
+                            top: childTop,
+                            width: childWidth,
+                            height: childHeight
+                        });
+                        
+                        if (childObj) {
+                            childObj.elementId = childElement.id;
+                            childObj.elementData = childElement;
+                            groupObjects.push(childObj);
+                        }
+                    });
+                }
+                
+                if (groupObjects.length > 0) {
+                    obj = new fabric.Group(groupObjects, {
+                        left: left,
+                        top: top
+                    });
+                } else {
+                    obj = new fabric.Rect({
+                        left: left,
+                        top: top,
+                        width: width,
+                        height: height,
+                        fill: 'transparent',
+                        stroke: '#3b82f6',
+                        strokeWidth: 2,
+                        strokeDashArray: [5, 5]
+                    });
+                }
+            } else switch (element.type) {
                 case 'textbox':
                     const isFixedMode = element.textMode === 'fixed';
                     if (isFixedMode) {
@@ -1087,6 +1166,42 @@ const CanvasManager = {
             if (obj) {
                 obj.elementId = element.id;
                 obj.elementData = element;
+                
+                // 设置锁定属性
+                if (element.locked) {
+                    obj.set('selectable', false);
+                    obj.set('evented', true); // 保持 evented=true，这样可以右键点击
+                    // 完全禁用移动和调整大小
+                    obj.set('lockMovementX', true);
+                    obj.set('lockMovementY', true);
+                    obj.set('lockRotation', true);
+                    obj.set('lockScalingX', true);
+                    obj.set('lockScalingY', true);
+                    obj.set('hasControls', false);
+                    obj.set('hasBorders', false);
+                    // 给锁定元素添加视觉指示
+                    if (obj.type !== 'group') {
+                        obj.set('stroke', '#9ca3af');
+                        obj.set('strokeWidth', 2);
+                        obj.set('strokeDashArray', [5, 5]);
+                    }
+                } else {
+                    obj.set('selectable', true);
+                    obj.set('evented', true);
+                    // 启用移动和调整大小
+                    obj.set('lockMovementX', false);
+                    obj.set('lockMovementY', false);
+                    obj.set('lockRotation', false);
+                    obj.set('lockScalingX', false);
+                    obj.set('lockScalingY', false);
+                    obj.set('hasControls', true);
+                    obj.set('hasBorders', true);
+                    // 清除锁定视觉指示
+                    if (obj.type !== 'group' && obj.type !== 'textbox' && obj.type !== 'i-text') {
+                        obj.set('strokeWidth', 0);
+                        obj.set('strokeDashArray', null);
+                    }
+                }
             }
         } catch (error) {
             console.error('[CanvasManager] 创建对象失败:', error, element);
@@ -1366,10 +1481,23 @@ const CanvasManager = {
         // 右键点击：显示上下文菜单
         if (e.button === 3 && e.target && e.target.elementId) {
             e.e.preventDefault();
+            
+            const targetElementId = e.target.elementId;
             const store = window.editor?.store;
-            if (store) store.selectElement(e.target.elementId);
+            const state = store?.getState();
+            
+            if (state) {
+                const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+                const element = slide?.elements.find(el => el.id === targetElementId);
+                
+                // 只有未锁定的元素才选中，锁定的元素只显示菜单
+                if (element && !element.locked) {
+                    if (store) store.selectElement(targetElementId);
+                }
+            }
+            
             if (window.ContextMenu) {
-                window.ContextMenu.show(e.e.clientX, e.e.clientY, e.target.elementId);
+                window.ContextMenu.show(e.e.clientX, e.e.clientY, targetElementId);
             }
         } else {
             // 其他点击：隐藏菜单
