@@ -72,6 +72,8 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
+}
+
 .toolbar {
     display: flex;
     align-items: center;
@@ -1267,7 +1269,7 @@ body {
     justify-content: flex-start;
     padding: 60px 40px;
     overflow-y: auto;
-    z-index: 5;
+    z-index: 1000;
 }
 
 .welcome-page.hidden {
