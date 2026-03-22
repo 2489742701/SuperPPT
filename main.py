@@ -931,6 +931,21 @@ class ApiWrapper(QObject):
             print(f"[PyQt6] 关闭窗口失败: {e}")
             return {"success": False, "message": str(e)}
 
+    @pyqtSlot(result='QVariant')
+    def export_pdf(self):
+        """
+        导出演示文稿为 PDF 文件
+        
+        Returns:
+            dict: 包含执行结果的字典
+        """
+        try:
+            result = self.api.export_pdf()
+            return result
+        except Exception as e:
+            print(f"[PyQt6] PDF导出失败: {e}")
+            return {"success": False, "message": str(e)}
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='HTML PPT 编辑器 - 演示文稿制作工具')

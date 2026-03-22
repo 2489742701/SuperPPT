@@ -715,11 +715,68 @@
         </div>
     </div>
     
+    <div id="master-modal" class="modal hidden">
+        <div class="modal-content master-modal-content">
+            <div class="modal-header">
+                <h3>幻灯片母版</h3>
+                <button class="modal-close" data-close="master-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="master-list">
+                    <div class="master-section-title">可用母版</div>
+                    <div id="master-items" class="master-items">
+                        <!-- 母版列表将由 JS 动态生成 -->
+                    </div>
+                </div>
+                <div class="master-editor">
+                    <div class="master-section-title">编辑母版</div>
+                    <div class="master-form">
+                        <div class="form-row">
+                            <label>母版名称</label>
+                            <input type="text" id="master-name" class="form-input" placeholder="输入母版名称">
+                        </div>
+                        <div class="form-row">
+                            <label>背景颜色</label>
+                            <div class="color-input-group">
+                                <input type="color" id="master-bg-color" class="color-picker" value="#ffffff">
+                                <input type="text" id="master-bg-color-text" class="form-input" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label>背景渐变</label>
+                            <select id="master-gradient" class="form-select">
+                                <option value="">无渐变</option>
+                                <option value="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">紫蓝渐变</option>
+                                <option value="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">粉红渐变</option>
+                                <option value="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">蓝青渐变</option>
+                                <option value="linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">绿青渐变</option>
+                                <option value="linear-gradient(135deg, #fa709a 0%, #fee140 100%)">橙粉渐变</option>
+                                <option value="linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)">淡彩渐变</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>预览</label>
+                            <div id="master-preview" class="master-preview" style="background: #ffffff;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-add-master">新建母版</button>
+                <button class="btn btn-secondary" id="btn-delete-master">删除母版</button>
+                <button class="btn btn-primary" id="btn-save-master">保存母版</button>
+                <button class="btn btn-primary" id="btn-apply-master">应用到当前幻灯片</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="js/modules/translations.js"></script>
     <script src="js/modules/store.js"></script>
     <script src="js/modules/pybridge.js"></script>
     <script src="js/modules/storage.js"></script>
     <script src="js/modules/link-modal.js"></script>
+    <script src="js/modules/master-modal.js"></script>
     <script src="js/modules/context-menu.js"></script>
     <script src="js/modules/canvas.js"></script>
     <script src="js/modules/property-panel.js"></script>

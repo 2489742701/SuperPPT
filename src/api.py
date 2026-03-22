@@ -268,6 +268,115 @@ class API:
     def export_html(self) -> str:
         return self.render_to_html()
 
+    def export_pdf(self, output_path: str = None) -> Dict:
+        """
+        导出演示文稿为 PDF 文件
+        
+        Args:
+            output_path: 输出路径，如果不指定则弹出保存对话框
+            
+        Returns:
+            包含 success 和 path 的字典
+        """
+        try:
+            from reportlab.lib.pagesizes import A4, landscape
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.units import inch
+            import io
+            
+            if not output_path:
+                from PyQt6.QtWidgets import QFileDialog
+                from PyQt6.QtCore import QSettings
+                
+                settings = QSettings("PPTEditor", "Settings")
+                last_dir = settings.value("last_export_dir", "")
+                
+                file_dialog = QFileDialog()
+                file_dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+                file_dialog.setNameFilter("PDF 文件 (*.pdf)")
+                file_dialog.setDefaultSuffix("pdf")
+                file_dialog.setDirectory(last_dir)
+                
+                if file_dialog.exec():
+                    output_path = file_dialog.selectedFiles()[0]
+                    settings.setValue("last_export_dir", os.path.dirname(output_path))
+                else:
+                    return {"success": False, "message": "用户取消"}
+            
+            slide_width = 1200
+            slide_height = 675
+            
+            page_width = landscape(A4)[0]
+            page_height = landscape(A4)[1]
+            
+            scale = min(page_width / slide_width, page_height / slide_height) * 0.95
+            
+            c = canvas.Canvas(output_path, pagesize=landscape(A4))
+            
+            for i, slide in enumerate(self.presentation.slides):
+                if i > 0:
+                    c.showPage()
+                
+                offset_x = (page_width - slide_width * scale) / 2
+                offset_y = (page_height - slide_height * scale) / 2
+                
+                bg_color = slide.metadata.get("backgroundColor", "#ffffff")
+                c.setFillColor(self._hex_to_rgb(bg_color))
+                c.rect(offset_x, offset_y, slide_width * scale, slide_height * scale, fill=True, stroke=False)
+                
+                for element in slide.elements:
+                    self._draw_element_to_pdf(c, element, offset_x, offset_y, scale)
+            
+            c.save()
+            
+            return {"success": True, "path": output_path}
+            
+        except ImportError:
+            return {"success": False, "message": "请安装 reportlab: pip install reportlab"}
+        except Exception as e:
+            print(f"[API] PDF导出失败: {e}")
+            return {"success": False, "message": str(e)}
+
+    def _hex_to_rgb(self, hex_color: str):
+        """将十六进制颜色转换为 reportlab RGB"""
+        hex_color = hex_color.lstrip('#')
+        if len(hex_color) == 6:
+            r, g, b = tuple(int(hex_color[i:i+2], 16) / 255 for i in (0, 2, 4))
+            return (r, g, b)
+        return (1, 1, 1)
+
+    def _draw_element_to_pdf(self, c, element, offset_x, offset_y, scale):
+        """在 PDF canvas 上绘制元素"""
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        
+        style = element.style or {}
+        x = (style.get('x', 0) * scale) + offset_x
+        y = offset_y + (675 * scale) - ((style.get('y', 0) + style.get('height', 50)) * scale)
+        width = style.get('width', 100) * scale
+        height = style.get('height', 50) * scale
+        
+        el_type = element.type or 'shape'
+        
+        if el_type in ('textbox', 'text'):
+            content = element.content or ''
+            font_size = style.get('fontSize', 24) * scale
+            color = self._hex_to_rgb(style.get('color', '#333333'))
+            
+            c.setFillColor(color)
+            c.setFont("Helvetica", font_size)
+            c.drawString(x, y + height - font_size, content)
+            
+        elif el_type == 'shape':
+            fill = self._hex_to_rgb(style.get('fill', '#007acc'))
+            c.setFillColor(fill)
+            
+            shape_type = element.shapeType or 'rectangle'
+            if shape_type == 'circle':
+                c.ellipse(x, y, x + width, y + height, fill=True, stroke=False)
+            else:
+                c.rect(x, y, width, height, fill=True, stroke=False)
+
     def render_to_html(self) -> str:
         if self.template_env and self.template_env.loader:
             try:

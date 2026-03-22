@@ -20,16 +20,50 @@
     --red-500: #ef4444;
     --canvas-width: 1200;
     --canvas-height: 675;
+    
+    /* 主题变量 - 亮色主题 */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f4f4f5;
+    --bg-tertiary: #e4e4e7;
+    --text-primary: #18181b;
+    --text-secondary: #52525b;
+    --text-tertiary: #71717a;
+    --border-color: #e4e4e7;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 暗色主题 */
+[data-theme="dark"] {
+    --zinc-50: #18181b;
+    --zinc-100: #27272a;
+    --zinc-200: #3f3f46;
+    --zinc-300: #52525b;
+    --zinc-400: #71717a;
+    --zinc-500: #a1a1aa;
+    --zinc-600: #d4d4d8;
+    --zinc-700: #e4e4e7;
+    --zinc-800: #f4f4f5;
+    --zinc-900: #fafafa;
+    
+    --bg-primary: #18181b;
+    --bg-secondary: #27272a;
+    --bg-tertiary: #3f3f46;
+    --text-primary: #fafafa;
+    --text-secondary: #d4d4d8;
+    --text-tertiary: #a1a1aa;
+    --border-color: #3f3f46;
+    --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
-    background: var(--zinc-100);
-    color: var(--zinc-900);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     overflow: hidden;
     height: 100vh;
     font-size: 14px;
     line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .app-container {
@@ -38,18 +72,17 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
-}
-
 .toolbar {
     display: flex;
     align-items: center;
     height: 56px;
     padding: 0 16px;
-    background: white;
-    border-bottom: 1px solid var(--zinc-200);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 1px 2px var(--shadow-color);
     z-index: 20;
     gap: 4px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .toolbar-brand {
@@ -2029,4 +2062,135 @@ body {
     padding-top: 8px;
     font-size: 10px;
     color: var(--zinc-600);
+}
+
+/* 母版编辑器样式 */
+.master-modal-content {
+    max-width: 700px;
+}
+
+.master-modal-content .modal-body {
+    display: flex;
+    gap: 20px;
+}
+
+.master-list {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.master-editor {
+    flex: 1;
+}
+
+.master-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--zinc-700);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--zinc-200);
+}
+
+.master-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.master-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border: 2px solid var(--zinc-200);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.master-item:hover {
+    border-color: var(--zinc-300);
+    background: var(--zinc-50);
+}
+
+.master-item.active {
+    border-color: var(--blue-500);
+    background: #eff6ff;
+}
+
+.master-item-preview {
+    width: 40px;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid var(--zinc-200);
+    flex-shrink: 0;
+}
+
+.master-item-name {
+    font-size: 13px;
+    color: var(--zinc-700);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.master-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.master-form .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.master-form .form-row label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--zinc-600);
+}
+
+.master-form .form-input,
+.master-form .form-select {
+    padding: 8px 12px;
+    border: 1px solid var(--zinc-200);
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.master-form .form-input:focus,
+.master-form .form-select:focus {
+    border-color: var(--blue-500);
+}
+
+.color-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-input-group .color-picker {
+    width: 40px;
+    height: 32px;
+    border: 1px solid var(--zinc-200);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.color-input-group .form-input {
+    flex: 1;
+}
+
+.master-preview {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    border: 1px solid var(--zinc-200);
+    transition: background 0.3s;
 }
