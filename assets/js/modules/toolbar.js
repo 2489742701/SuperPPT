@@ -76,6 +76,14 @@ const Toolbar = {
             });
         });
         
+        document.querySelectorAll('.dropdown-item[data-action^="theme-"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.action.replace('theme-', '');
+                this.setTheme(theme);
+                this.closeAllDropdowns();
+            });
+        });
+        
         document.querySelectorAll('.dropdown-item[data-action^="panel-"]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const position = btn.dataset.action.replace('panel-', '');
@@ -160,12 +168,72 @@ const Toolbar = {
                         </div>
                         <span>两栏内容</span>
                     </div>
+                    <div class="layout-item" data-layout="three_column">
+                        <div class="layout-preview">
+                            <div class="layout-preview-title-left"></div>
+                            <div class="layout-preview-columns">
+                                <div class="layout-preview-col"></div>
+                                <div class="layout-preview-col"></div>
+                                <div class="layout-preview-col"></div>
+                            </div>
+                        </div>
+                        <span>三栏内容</span>
+                    </div>
                     <div class="layout-item" data-layout="section_header">
                         <div class="layout-preview">
                             <div class="layout-preview-section-title"></div>
                             <div class="layout-preview-divider-center"></div>
                         </div>
                         <span>章节标题</span>
+                    </div>
+                    <div class="layout-item" data-layout="quote">
+                        <div class="layout-preview">
+                            <div class="layout-preview-quote-line"></div>
+                            <div class="layout-preview-quote-text"></div>
+                        </div>
+                        <span>引用/名言</span>
+                    </div>
+                    <div class="layout-item" data-layout="comparison">
+                        <div class="layout-preview">
+                            <div class="layout-preview-compare-box left"></div>
+                            <div class="layout-preview-compare-box right"></div>
+                        </div>
+                        <span>对比样式</span>
+                    </div>
+                    <div class="layout-item" data-layout="timeline">
+                        <div class="layout-preview">
+                            <div class="layout-preview-timeline-line"></div>
+                            <div class="layout-preview-timeline-dots"></div>
+                        </div>
+                        <span>时间线</span>
+                    </div>
+                    <div class="layout-item" data-layout="image_left">
+                        <div class="layout-preview">
+                            <div class="layout-preview-image-box left"></div>
+                            <div class="layout-preview-text-box right"></div>
+                        </div>
+                        <span>图片在左</span>
+                    </div>
+                    <div class="layout-item" data-layout="image_right">
+                        <div class="layout-preview">
+                            <div class="layout-preview-text-box left"></div>
+                            <div class="layout-preview-image-box right"></div>
+                        </div>
+                        <span>图片在右</span>
+                    </div>
+                    <div class="layout-item" data-layout="bullet_points">
+                        <div class="layout-preview">
+                            <div class="layout-preview-title-left"></div>
+                            <div class="layout-preview-bullets"></div>
+                        </div>
+                        <span>要点列表</span>
+                    </div>
+                    <div class="layout-item" data-layout="numbered_list">
+                        <div class="layout-preview">
+                            <div class="layout-preview-title-left"></div>
+                            <div class="layout-preview-numbers"></div>
+                        </div>
+                        <span>编号列表</span>
                     </div>
                     <div class="layout-item" data-layout="blank">
                         <div class="layout-preview layout-preview-blank"></div>
@@ -250,6 +318,28 @@ const Toolbar = {
     setTransitionType(type) {
         this.store.updateSettings({ transitionType: type });
         this.updateSettingsDots();
+    },
+
+    setTheme(theme) {
+        if (!window.ThemeManager) return;
+        
+        if (theme === 'auto') {
+            ThemeManager.setAutoSwitch(true);
+        } else {
+            ThemeManager.setAutoSwitch(false);
+            ThemeManager.setTheme(theme);
+        }
+        
+        this.updateThemeDots();
+    },
+
+    updateThemeDots() {
+        const isDark = ThemeManager.isDark();
+        const isAuto = ThemeManager.autoSwitch;
+        
+        document.getElementById('dot-theme-light')?.classList.toggle('active', !isDark && !isAuto);
+        document.getElementById('dot-theme-dark')?.classList.toggle('active', isDark && !isAuto);
+        document.getElementById('dot-theme-auto')?.classList.toggle('active', isAuto);
     },
 
     openShortcutsModal() {

@@ -282,6 +282,20 @@
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         <span data-i18n="toolbar.exportPdf">导出 PDF</span>
                     </button>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-header">主题</div>
+                    <button class="dropdown-item" data-action="theme-light">
+                        <span class="status-dot" id="dot-theme-light"></span>
+                        <span>亮色主题</span>
+                    </button>
+                    <button class="dropdown-item" data-action="theme-dark">
+                        <span class="status-dot" id="dot-theme-dark"></span>
+                        <span>暗色主题</span>
+                    </button>
+                    <button class="dropdown-item" data-action="theme-auto">
+                        <span class="status-dot active" id="dot-theme-auto"></span>
+                        <span>自动切换（按时间）</span>
+                    </button>
                 </div>
             </div>
             
@@ -772,6 +786,7 @@
     </div>
     
     <script src="js/modules/translations.js"></script>
+    <script src="js/modules/theme-manager.js"></script>
     <script src="js/modules/store.js"></script>
     <script src="js/modules/pybridge.js"></script>
     <script src="js/modules/storage.js"></script>

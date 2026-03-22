@@ -162,6 +162,77 @@ class EditorStore {
                     { type: 'textbox', content: '章节标题', textMode: 'fixed', style: { x: 100, y: 250, width: 1000, height: 120, fontSize: 60, fontWeight: 'bold', color: '#333333', textAlign: 'center' } },
                     { type: 'shape', content: null, style: { x: 450, y: 400, width: 300, height: 6, fill: '#3b82f6' } }
                 ]
+            },
+            three_column: {
+                elements: [
+                    { type: 'textbox', content: '点击此处输入标题', textMode: 'fixed', style: { x: 50, y: 30, width: 1100, height: 70, fontSize: 36, fontWeight: 'bold', color: '#333333', textAlign: 'left' } },
+                    { type: 'textbox', content: '第一栏', textMode: 'fixed', style: { x: 50, y: 130, width: 340, height: 480, fontSize: 18, color: '#333333', textAlign: 'center', lineHeight: 1.5 } },
+                    { type: 'textbox', content: '第二栏', textMode: 'fixed', style: { x: 430, y: 130, width: 340, height: 480, fontSize: 18, color: '#333333', textAlign: 'center', lineHeight: 1.5 } },
+                    { type: 'textbox', content: '第三栏', textMode: 'fixed', style: { x: 810, y: 130, width: 340, height: 480, fontSize: 18, color: '#333333', textAlign: 'center', lineHeight: 1.5 } }
+                ]
+            },
+            quote: {
+                elements: [
+                    { type: 'shape', content: null, style: { x: 100, y: 150, width: 6, height: 300, fill: '#3b82f6' } },
+                    { type: 'textbox', content: '"在这里输入引用文字，可以是名人名言或重要观点。"', textMode: 'fixed', style: { x: 130, y: 180, width: 970, height: 200, fontSize: 32, fontStyle: 'italic', color: '#333333', textAlign: 'left', lineHeight: 1.6 } },
+                    { type: 'textbox', content: '— 引用来源', textMode: 'fixed', style: { x: 130, y: 400, width: 970, height: 50, fontSize: 20, color: '#666666', textAlign: 'right' } }
+                ]
+            },
+            comparison: {
+                elements: [
+                    { type: 'textbox', content: '对比标题', textMode: 'fixed', style: { x: 50, y: 30, width: 1100, height: 70, fontSize: 36, fontWeight: 'bold', color: '#333333', textAlign: 'center' } },
+                    { type: 'shape', content: null, style: { x: 50, y: 120, width: 520, height: 480, fill: '#f0f9ff', stroke: '#3b82f6', strokeWidth: 2 } },
+                    { type: 'shape', content: null, style: { x: 630, y: 120, width: 520, height: 480, fill: '#fef3c7', stroke: '#f59e0b', strokeWidth: 2 } },
+                    { type: 'textbox', content: '选项 A', textMode: 'fixed', style: { x: 50, y: 130, width: 520, height: 50, fontSize: 24, fontWeight: 'bold', color: '#3b82f6', textAlign: 'center' } },
+                    { type: 'textbox', content: '选项 B', textMode: 'fixed', style: { x: 630, y: 130, width: 520, height: 50, fontSize: 24, fontWeight: 'bold', color: '#f59e0b', textAlign: 'center' } }
+                ]
+            },
+            timeline: {
+                elements: [
+                    { type: 'textbox', content: '时间线', textMode: 'fixed', style: { x: 50, y: 30, width: 1100, height: 70, fontSize: 36, fontWeight: 'bold', color: '#333333', textAlign: 'left' } },
+                    { type: 'shape', content: null, style: { x: 100, y: 300, width: 1000, height: 4, fill: '#3b82f6' } },
+                    { type: 'shape', content: null, style: { x: 200, y: 290, width: 24, height: 24, fill: '#3b82f6', borderRadius: 12 } },
+                    { type: 'shape', content: null, style: { x: 500, y: 290, width: 24, height: 24, fill: '#3b82f6', borderRadius: 12 } },
+                    { type: 'shape', content: null, style: { x: 800, y: 290, width: 24, height: 24, fill: '#3b82f6', borderRadius: 12 } },
+                    { type: 'textbox', content: '步骤 1', textMode: 'fixed', style: { x: 100, y: 330, width: 200, height: 30, fontSize: 16, fontWeight: 'bold', color: '#333333', textAlign: 'center' } },
+                    { type: 'textbox', content: '步骤 2', textMode: 'fixed', style: { x: 400, y: 330, width: 200, height: 30, fontSize: 16, fontWeight: 'bold', color: '#333333', textAlign: 'center' } },
+                    { type: 'textbox', content: '步骤 3', textMode: 'fixed', style: { x: 700, y: 330, width: 200, height: 30, fontSize: 16, fontWeight: 'bold', color: '#333333', textAlign: 'center' } }
+                ]
+            },
+            image_left: {
+                elements: [
+                    { type: 'textbox', content: '点击此处输入标题', textMode: 'fixed', style: { x: 50, y: 30, width: 1100, height: 70, fontSize: 36, fontWeight: 'bold', color: '#333333', textAlign: 'left' } },
+                    { type: 'shape', content: null, style: { x: 50, y: 120, width: 450, height: 480, fill: '#e4e4e7', stroke: '#a1a1aa', strokeWidth: 1 } },
+                    { type: 'textbox', content: '📷 点击插入图片', textMode: 'fixed', style: { x: 50, y: 330, width: 450, height: 50, fontSize: 18, color: '#71717a', textAlign: 'center' } },
+                    { type: 'textbox', content: '点击此处输入内容描述', textMode: 'fixed', style: { x: 530, y: 120, width: 620, height: 480, fontSize: 20, color: '#333333', textAlign: 'left', lineHeight: 1.6 } }
+                ]
+            },
+            image_right: {
+                elements: [
+                    { type: 'textbox', content: '点击此处输入标题', textMode: 'fixed', style: { x: 50, y: 30, width: 1100, height: 70, fontSize: 36, fontWeight: 'bold', color: '#333333', textAlign: 'left' } },
+                    { type: 'textbox', content: '点击此处输入内容描述', textMode: 'fixed', style: { x: 50, y: 120, width: 620, height: 480, fontSize: 20, color: '#333333', textAlign: 'left', lineHeight: 1.6 } },
+                    { type: 'shape', content: null, style: { x: 700, y: 120, width: 450, height: 480, fill: '#e4e4e7', stroke: '#a1a1aa', strokeWidth: 1 } },
+                    { type: 'textbox', content: '📷 点击插入图片', textMode: 'fixed', style: { x: 700, y: 330, width: 450, height: 50, fontSize: 18, color: '#71717a', textAlign: 'center' } }
+                ]
+            },
+            bullet_points: {
+                elements: [
+                    { type: 'textbox', content: '点击此处输入标题', textMode: 'fixed', style: { x: 50, y: 30, width: 1100, height: 70, fontSize: 36, fontWeight: 'bold', color: '#333333', textAlign: 'left' } },
+                    { type: 'textbox', content: '• 第一个要点\n• 第二个要点\n• 第三个要点\n• 第四个要点\n• 第五个要点', textMode: 'fixed', style: { x: 50, y: 130, width: 1100, height: 480, fontSize: 24, color: '#333333', textAlign: 'left', lineHeight: 2.0 } }
+                ]
+            },
+            numbered_list: {
+                elements: [
+                    { type: 'textbox', content: '点击此处输入标题', textMode: 'fixed', style: { x: 50, y: 30, width: 1100, height: 70, fontSize: 36, fontWeight: 'bold', color: '#333333', textAlign: 'left' } },
+                    { type: 'textbox', content: '1. 第一步\n2. 第二步\n3. 第三步\n4. 第四步\n5. 第五步', textMode: 'fixed', style: { x: 50, y: 130, width: 1100, height: 480, fontSize: 24, color: '#333333', textAlign: 'left', lineHeight: 2.0 } }
+                ]
+            },
+            thank_you: {
+                elements: [
+                    { type: 'textbox', content: '感谢观看', textMode: 'fixed', style: { x: 100, y: 200, width: 1000, height: 100, fontSize: 60, fontWeight: 'bold', color: '#333333', textAlign: 'center' } },
+                    { type: 'shape', content: null, style: { x: 450, y: 320, width: 300, height: 6, fill: '#3b82f6' } },
+                    { type: 'textbox', content: '联系方式：example@email.com', textMode: 'fixed', style: { x: 200, y: 380, width: 800, height: 50, fontSize: 20, color: '#666666', textAlign: 'center' } }
+                ]
             }
         };
         

@@ -113,6 +113,11 @@ class PPTEditor {
         Preview.bindEvents(this.store);
         ContextMenu.bindEvents(this.store);
         LinkModal.init();
+        
+        // 初始化主题管理器
+        if (window.ThemeManager) {
+            ThemeManager.init(this.store);
+        }
 
         // 步骤5: 绑定事件和快捷键
         this.bindKeyboardShortcuts();

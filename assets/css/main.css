@@ -240,11 +240,12 @@ body {
 
 .sidebar-left {
     width: 256px;
-    background: var(--zinc-50);
-    border-right: 1px solid var(--zinc-200);
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     z-index: 10;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-left.hidden {
@@ -1266,7 +1267,7 @@ body {
     justify-content: flex-start;
     padding: 60px 40px;
     overflow-y: auto;
-    z-index: 2000;
+    z-index: 5;
 }
 
 .welcome-page.hidden {
@@ -1805,6 +1806,184 @@ body {
 
 .layout-preview-blank {
     background: white;
+}
+
+/* 新增版式预览样式 */
+.layout-preview-quote-line {
+    position: absolute;
+    left: 20px;
+    top: 15px;
+    width: 4px;
+    height: 50px;
+    background: var(--blue-500);
+    border-radius: 2px;
+}
+
+.layout-preview-quote-text {
+    position: absolute;
+    left: 32px;
+    top: 20px;
+    width: 60px;
+    height: 8px;
+    background: var(--zinc-300);
+    border-radius: 2px;
+}
+
+.layout-preview-compare-box {
+    position: absolute;
+    top: 15px;
+    width: 38px;
+    height: 50px;
+    border-radius: 4px;
+    border: 2px solid var(--blue-500);
+}
+
+.layout-preview-compare-box.left {
+    left: 10px;
+    background: #eff6ff;
+}
+
+.layout-preview-compare-box.right {
+    right: 10px;
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
+.layout-preview-timeline-line {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    top: 35px;
+    height: 3px;
+    background: var(--blue-500);
+    border-radius: 1px;
+}
+
+.layout-preview-timeline-dots {
+    position: absolute;
+    top: 31px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.layout-preview-timeline-dots::before,
+.layout-preview-timeline-dots::after,
+.layout-preview-timeline-dots span {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--blue-500);
+    border-radius: 50%;
+}
+
+.layout-preview-image-box {
+    position: absolute;
+    top: 15px;
+    width: 35px;
+    height: 50px;
+    background: var(--zinc-200);
+    border-radius: 4px;
+}
+
+.layout-preview-image-box.left {
+    left: 10px;
+}
+
+.layout-preview-image-box.right {
+    right: 10px;
+}
+
+.layout-preview-text-box {
+    position: absolute;
+    top: 15px;
+    width: 35px;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
+}
+
+.layout-preview-text-box.left {
+    left: 10px;
+}
+
+.layout-preview-text-box.right {
+    right: 10px;
+}
+
+.layout-preview-text-box::before,
+.layout-preview-text-box::after {
+    content: '';
+    height: 6px;
+    background: var(--zinc-300);
+    border-radius: 2px;
+}
+
+.layout-preview-text-box::before {
+    width: 100%;
+}
+
+.layout-preview-text-box::after {
+    width: 80%;
+}
+
+.layout-preview-bullets {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    top: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.layout-preview-bullets::before,
+.layout-preview-bullets::after,
+.layout-preview-bullets span {
+    content: '';
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 8px;
+}
+
+.layout-preview-bullets::before,
+.layout-preview-bullets::after,
+.layout-preview-bullets span {
+    background: linear-gradient(90deg, var(--zinc-300) 8px, transparent 8px);
+    background-size: 50px 8px;
+    background-repeat: no-repeat;
+}
+
+.layout-preview-numbers {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    top: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.layout-preview-numbers::before,
+.layout-preview-numbers::after,
+.layout-preview-numbers span {
+    content: '';
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 8px;
+}
+
+.layout-preview-numbers::before,
+.layout-preview-numbers::after,
+.layout-preview-numbers span {
+    background: linear-gradient(90deg, var(--blue-500) 8px, var(--zinc-300) 8px);
+    background-size: 50px 8px;
+    background-repeat: no-repeat;
 }
 
 .layout-item span {
