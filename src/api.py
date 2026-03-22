@@ -377,6 +377,176 @@ class API:
             else:
                 c.rect(x, y, width, height, fill=True, stroke=False)
 
+    def export_images(self, output_dir: str = None, format: str = 'png') -> Dict:
+        """
+        导出演示文稿为图片
+        
+        Args:
+            output_dir: 输出目录，如果不指定则弹出选择对话框
+            format: 图片格式 (png, jpg)
+            
+        Returns:
+            包含 success 和 paths 的字典
+        """
+        try:
+            if not output_dir:
+                from PyQt6.QtWidgets import QFileDialog
+                from PyQt6.QtCore import QSettings
+                
+                settings = QSettings("PPTEditor", "Settings")
+                last_dir = settings.value("last_export_dir", "")
+                
+                output_dir = QFileDialog.getExistingDirectory(
+                    None, "选择导出目录", last_dir
+                )
+                
+                if not output_dir:
+                    return {"success": False, "message": "用户取消"}
+                    
+                settings.setValue("last_export_dir", output_dir)
+            
+            import os
+            paths = []
+            
+            # 使用 Pillow 生成图片
+            try:
+                from PIL import Image, ImageDraw, ImageFont
+                
+                for i, slide in enumerate(self.presentation.slides):
+                    # 创建幻灯片图片
+                    img = Image.new('RGB', (1200, 675), color='white')
+                    draw = ImageDraw.Draw(img)
+                    
+                    # 绘制背景
+                    bg_color = slide.metadata.get('backgroundColor', '#ffffff')
+                    if bg_color:
+                        try:
+                            # 简单处理纯色背景
+                            if not bg_color.startswith('linear-gradient'):
+                                img = Image.new('RGB', (1200, 675), color=bg_color)
+                                draw = ImageDraw.Draw(img)
+                        except:
+                            pass
+                    
+                    # 绘制元素
+                    for element in slide.elements:
+                        try:
+                            self._draw_element_to_image(draw, element)
+                        except Exception as e:
+                            print(f"[API] 绘制元素失败: {e}")
+                    
+                    # 保存图片
+                    filename = f"slide_{i+1:03d}.{format}"
+                    filepath = os.path.join(output_dir, filename)
+                    img.save(filepath, format.upper())
+                    paths.append(filepath)
+                    
+            except ImportError:
+                # 如果没有 Pillow，返回提示
+                return {
+                    "success": False, 
+                    "message": "需要安装 Pillow 库: pip install Pillow"
+                }
+            
+            return {
+                "success": True, 
+                "paths": paths,
+                "count": len(paths),
+                "directory": output_dir
+            }
+            
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+    
+    def _draw_element_to_image(self, draw, element):
+        """绘制元素到图片"""
+        from PIL import ImageFont
+        
+        style = element.style or {}
+        x = style.get('x', 0)
+        y = style.get('y', 0)
+        width = style.get('width', 100)
+        height = style.get('height', 50)
+        
+        el_type = element.type or 'shape'
+        
+        if el_type in ('textbox', 'text'):
+            content = element.content or ''
+            font_size = style.get('fontSize', 24)
+            color = style.get('color', '#333333')
+            
+            # 尝试加载字体
+            try:
+                font = ImageFont.truetype("arial.ttf", font_size)
+            except:
+                font = ImageFont.load_default()
+            
+            # 转换颜色
+            if color.startswith('#'):
+                color = color[1:]
+                if len(color) == 6:
+                    color = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
+                else:
+                    color = (51, 51, 51)
+            else:
+                color = (51, 51, 51)
+            
+            draw.text((x, y), content, fill=color, font=font)
+            
+        elif el_type == 'shape':
+            fill = style.get('fill', '#007acc')
+            
+            # 转换颜色
+            if fill.startswith('#'):
+                fill = fill[1:]
+                if len(fill) == 6:
+                    fill = tuple(int(fill[i:i+2], 16) for i in (0, 2, 4))
+                else:
+                    fill = (0, 122, 204)
+            else:
+                fill = (0, 122, 204)
+            
+            shape_type = element.shapeType or 'rectangle'
+            if shape_type == 'circle':
+                draw.ellipse([x, y, x + width, y + height], fill=fill)
+            else:
+                draw.rectangle([x, y, x + width, y + height], fill=fill)
+
+    def print_presentation(self) -> Dict:
+        """
+        打印演示文稿
+        
+        Returns:
+            包含 success 的字典
+        """
+        try:
+            from PyQt6.QtWidgets import QFileDialog
+            from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+            from PyQt6.QtGui import QTextDocument
+            from PyQt6.QtCore import QSettings
+            
+            printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+            
+            # 显示打印对话框
+            dialog = QPrintDialog(printer)
+            if dialog.exec() != QPrintDialog.DialogCode.Accepted:
+                return {"success": False, "message": "用户取消"}
+            
+            # 生成 HTML 内容用于打印
+            html_content = self.render_to_html()
+            
+            # 创建文本文档
+            doc = QTextDocument()
+            doc.setHtml(html_content)
+            
+            # 打印
+            doc.print_(printer)
+            
+            return {"success": True}
+            
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
     def render_to_html(self) -> str:
         if self.template_env and self.template_env.loader:
             try:

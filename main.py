@@ -581,6 +581,39 @@ class ApiWrapper(QObject):
         """
         return self.api.export_single_file()
 
+    @pyqtSlot(result='QVariant')
+    def export_images(self):
+        """
+        导出为图片
+        
+        Returns:
+            包含 success 和 paths 的字典
+        """
+        return self.api.export_images()
+
+    @pyqtSlot(str, result='QVariant')
+    def export_images_to_dir(self, output_dir: str):
+        """
+        导出为图片到指定目录
+        
+        Args:
+            output_dir: 输出目录
+            
+        Returns:
+            包含 success 和 paths 的字典
+        """
+        return self.api.export_images(output_dir)
+
+    @pyqtSlot(result='QVariant')
+    def print_presentation(self):
+        """
+        打印演示文稿
+        
+        Returns:
+            包含 success 的字典
+        """
+        return self.api.print_presentation()
+
     # ==================== 撤销/重做操作 ====================
     
     @pyqtSlot(result='QVariant')

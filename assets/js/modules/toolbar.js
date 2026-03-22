@@ -108,6 +108,21 @@ const Toolbar = {
             this.exportToPdf();
             this.closeAllDropdowns();
         });
+        
+        document.querySelector('[data-action="export-images"]')?.addEventListener('click', () => {
+            this.exportToImages();
+            this.closeAllDropdowns();
+        });
+        
+        document.querySelector('[data-action="export-html-file"]')?.addEventListener('click', () => {
+            this.exportToHtmlFile();
+            this.closeAllDropdowns();
+        });
+        
+        document.querySelector('[data-action="print"]')?.addEventListener('click', () => {
+            this.printPresentation();
+            this.closeAllDropdowns();
+        });
 
         this.bindShortcutsEvents();
     },
@@ -857,6 +872,68 @@ const Toolbar = {
             const dot = document.getElementById(`dot-anim-${type}`);
             if (dot) dot.classList.toggle('active', type === activeType);
         });
+    },
+    
+    async exportToImages() {
+        if (!window.pyApi) {
+            alert('导出图片功能需要后端支持');
+            return;
+        }
+        
+        try {
+            const result = await window.pyApi.export_images();
+            
+            if (result.success) {
+                alert(`成功导出 ${result.count} 张图片到:\n${result.directory}`);
+            } else {
+                alert('导出失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('导出失败: ' + e.message);
+        }
+    },
+    
+    async exportToHtmlFile() {
+        if (!window.pyApi) {
+            alert('导出HTML功能需要后端支持');
+            return;
+        }
+        
+        try {
+            const html = await window.pyApi.export_single_file();
+            
+            // 创建下载
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'presentation.html';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('HTML 文件已导出');
+        } catch (e) {
+            alert('导出失败: ' + e.message);
+        }
+    },
+    
+    async printPresentation() {
+        if (!window.pyApi) {
+            // 使用浏览器打印
+            window.print();
+            return;
+        }
+        
+        try {
+            const result = await window.pyApi.print_presentation();
+            
+            if (!result.success && result.message !== '用户取消') {
+                alert('打印失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            // 回退到浏览器打印
+            window.print();
+        }
     }
 };
 
