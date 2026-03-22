@@ -2730,6 +2730,19 @@ body {
     color: var(--text-secondary);
 }
 
+/* ==================== 颜色选择器暗色模式 ==================== */
+
+[data-theme="dark"] .color-picker {
+    border-color: var(--zinc-600);
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .color-input-group .form-input {
+    background: var(--bg-tertiary);
+    border-color: var(--zinc-600);
+    color: var(--text-primary);
+}
+
 /* ==================== 组合控件样式 ==================== */
 
 /* 组合控件删除确认对话框 */
