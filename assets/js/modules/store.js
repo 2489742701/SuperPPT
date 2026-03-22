@@ -555,6 +555,81 @@ class EditorStore {
         this.notify();
     }
 
+    // ==================== 母版操作 ====================
+
+    getSlideMasters() {
+        return this.presentation.slideMasters || {
+            default: { id: 'default', name: '默认母版', backgroundColor: '#ffffff', elements: [] },
+            dark: { id: 'dark', name: '深色母版', backgroundColor: '#1a1a2e', elements: [] },
+            gradient: { id: 'gradient', name: '渐变母版', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', elements: [] }
+        };
+    }
+
+    applyMasterToSlide(slideId, masterId) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        const masters = this.getSlideMasters();
+        const master = masters[masterId];
+        
+        if (!slide || !master) return;
+        
+        slide.masterId = masterId;
+        if (master.backgroundColor) {
+            slide.metadata = slide.metadata || {};
+            slide.metadata.backgroundColor = master.backgroundColor;
+        }
+        
+        this.pushHistory();
+        this.notify();
+    }
+
+    addSlideMaster(master) {
+        if (!this.presentation.slideMasters) {
+            this.presentation.slideMasters = {
+                default: { id: 'default', name: '默认母版', backgroundColor: '#ffffff', elements: [] }
+            };
+        }
+        
+        const id = master.id || `master-${Date.now()}`;
+        this.presentation.slideMasters[id] = { ...master, id };
+        
+        this.pushHistory();
+        this.notify();
+        return id;
+    }
+
+    updateSlideMaster(masterId, master) {
+        if (!this.presentation.slideMasters || !this.presentation.slideMasters[masterId]) return;
+        
+        this.presentation.slideMasters[masterId] = { ...master, id: masterId };
+        
+        // 更新所有使用此母版的幻灯片
+        this.presentation.slides.forEach(slide => {
+            if (slide.masterId === masterId && master.backgroundColor) {
+                slide.metadata = slide.metadata || {};
+                slide.metadata.backgroundColor = master.backgroundColor;
+            }
+        });
+        
+        this.pushHistory();
+        this.notify();
+    }
+
+    deleteSlideMaster(masterId) {
+        if (!this.presentation.slideMasters || masterId === 'default') return;
+        
+        delete this.presentation.slideMasters[masterId];
+        
+        // 清除使用此母版的幻灯片的母版引用
+        this.presentation.slides.forEach(slide => {
+            if (slide.masterId === masterId) {
+                slide.masterId = null;
+            }
+        });
+        
+        this.pushHistory();
+        this.notify();
+    }
+
     loadPresentation(data) {
         this.presentation = data;
         this.activeSlideId = data.slides[0]?.id || null;

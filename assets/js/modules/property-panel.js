@@ -87,6 +87,15 @@ const PropertyPanel = {
     },
 
     renderSlideProperties(slide, state, store, t) {
+        const masters = store.getSlideMasters ? store.getSlideMasters() : {};
+        const currentMasterId = slide?.masterId || 'default';
+        
+        let masterOptions = '';
+        Object.values(masters).forEach(master => {
+            const selected = master.id === currentMasterId ? 'selected' : '';
+            masterOptions += `<option value="${master.id}" ${selected}>${master.name}</option>`;
+        });
+        
         return `
             <div class="property-section">
                 <div class="property-section-title">${t.panels.settings}</div>
@@ -100,6 +109,18 @@ const PropertyPanel = {
                 <div class="property-row">
                     <span class="property-label">${t.properties.smartGuides}</span>
                     <input type="checkbox" class="property-checkbox" data-setting="smartGuidesEnabled" ${state.presentation.settings.smartGuidesEnabled ? 'checked' : ''}>
+                </div>
+            </div>
+            <div class="property-section">
+                <div class="property-section-title">幻灯片母版</div>
+                <div class="property-row">
+                    <span class="property-label">应用母版</span>
+                    <select class="property-input" id="slide-master-select" style="width:120px">
+                        ${masterOptions}
+                    </select>
+                </div>
+                <div class="property-row" style="margin-top:8px;">
+                    <button class="property-btn" id="btn-edit-master" style="flex:1;">编辑母版</button>
                 </div>
             </div>
             <div class="property-section">
@@ -375,6 +396,28 @@ const PropertyPanel = {
                 }
             });
         });
+        
+        // 母版选择器事件
+        const masterSelect = document.getElementById('slide-master-select');
+        if (masterSelect) {
+            masterSelect.addEventListener('change', (e) => {
+                if (state.activeSlideId && store.applyMasterToSlide) {
+                    store.applyMasterToSlide(state.activeSlideId, e.target.value);
+                }
+            });
+        }
+        
+        // 编辑母版按钮
+        const editMasterBtn = document.getElementById('btn-edit-master');
+        if (editMasterBtn) {
+            editMasterBtn.addEventListener('click', () => {
+                if (window.MasterModal) {
+                    window.MasterModal.open(state, store);
+                } else {
+                    alert('母版编辑功能即将推出！');
+                }
+            });
+        }
     },
 
     handlePropertyChange(e, store, state) {
