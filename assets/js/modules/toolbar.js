@@ -519,6 +519,14 @@ const Toolbar = {
             'add-button': () => {
                 const action = prompt('输入按钮动作 (例如: "next", "prev", "url"):', 'next') || 'next';
                 return { type: 'button', content: 'Click Me', action, style: { x: 100, y: 100, width: 120, height: 40, fill: '#3b82f6', color: '#ffffff', fontSize: 16 } };
+            },
+            'add-poll': () => {
+                this.openPollModal();
+                return null;
+            },
+            'add-random-picker': () => {
+                this.openRandomPickerModal();
+                return null;
             }
         };
         
@@ -1085,6 +1093,210 @@ const Toolbar = {
         } catch (e) {
             alert('导出失败: ' + e.message);
         }
+    },
+    
+    // ==================== 组合控件方法 ====================
+    
+    openPollModal() {
+        const existing = document.getElementById('poll-create-modal');
+        if (existing) existing.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'poll-create-modal';
+        modal.className = 'composite-create-modal';
+        modal.innerHTML = `
+            <div class="composite-create-content">
+                <div class="composite-create-header">
+                    <h3>创建投票组件</h3>
+                    <button class="composite-create-close">&times;</button>
+                </div>
+                <div class="composite-create-body">
+                    <div class="form-row">
+                        <label>投票标题</label>
+                        <input type="text" id="poll-title" class="form-input" value="请投票" placeholder="输入投票标题">
+                    </div>
+                    <div class="form-row">
+                        <label>选项（每行一个）</label>
+                        <textarea id="poll-options" class="names-editor" placeholder="选项 A&#10;选项 B&#10;选项 C">选项 A
+选项 B
+选项 C</textarea>
+                    </div>
+                    <div class="form-row">
+                        <label>样式</label>
+                        <select id="poll-style" class="form-select">
+                            <option value="bars">条形图</option>
+                            <option value="cards">卡片式</option>
+                            <option value="buttons">按钮式</option>
+                        </select>
+                    </div>
+                    <p class="names-hint">💡 投票组件会自动处理投票逻辑，删除时会删除所有相关元素</p>
+                </div>
+                <div class="composite-create-footer">
+                    <button class="btn btn-secondary" data-action="cancel">取消</button>
+                    <button class="btn btn-primary" data-action="create">创建</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.querySelector('.composite-create-close').addEventListener('click', () => modal.remove());
+        modal.querySelector('[data-action="cancel"]').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+        
+        modal.querySelector('[data-action="create"]').addEventListener('click', () => {
+            const title = document.getElementById('poll-title').value || '请投票';
+            const optionsText = document.getElementById('poll-options').value || '选项 A\n选项 B';
+            const style = document.getElementById('poll-style').value;
+            
+            const options = optionsText.split('\n').map(o => o.trim()).filter(o => o);
+            
+            if (options.length < 2) {
+                alert('请至少输入两个选项');
+                return;
+            }
+            
+            this.createPollComponent(title, options, style);
+            modal.remove();
+        });
+    },
+    
+    createPollComponent(title, options, style) {
+        const state = this.store.getState();
+        if (!state.activeSlideId) return;
+        
+        if (!window.CompositeComponents) {
+            alert('组合控件模块未加载');
+            return;
+        }
+        
+        const poll = CompositeComponents.createPoll({
+            title,
+            options,
+            style,
+            x: 400,
+            y: 150,
+            width: 400
+        });
+        
+        // 添加所有元素到幻灯片
+        poll.elements.forEach(element => {
+            // 调整位置
+            element.style.x += 400;
+            element.style.y += 150;
+            this.store.addElement(state.activeSlideId, element);
+        });
+    },
+    
+    openRandomPickerModal() {
+        const existing = document.getElementById('picker-create-modal');
+        if (existing) existing.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'picker-create-modal';
+        modal.className = 'composite-create-modal';
+        modal.innerHTML = `
+            <div class="composite-create-content">
+                <div class="composite-create-header">
+                    <h3>创建随机名单组件</h3>
+                    <button class="composite-create-close">&times;</button>
+                </div>
+                <div class="composite-create-body">
+                    <div class="form-row">
+                        <label>标题</label>
+                        <input type="text" id="picker-title" class="form-input" value="随机抽取" placeholder="输入标题">
+                    </div>
+                    <div class="form-row">
+                        <label>名单（每行一个名字）</label>
+                        <textarea id="picker-names" class="names-editor" placeholder="张三&#10;李四&#10;王五">张三
+李四
+王五
+赵六
+钱七</textarea>
+                    </div>
+                    <div class="form-row">
+                        <label>动画效果</label>
+                        <select id="picker-animation" class="form-select">
+                            <option value="spin">滚动效果</option>
+                            <option value="card">卡片翻转</option>
+                            <option value="slot">老虎机</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>
+                            <input type="checkbox" id="picker-repeat"> 允许重复抽取
+                        </label>
+                    </div>
+                    <p class="names-hint">💡 随机名单组件会自动处理抽取逻辑，删除时会删除所有相关元素</p>
+                </div>
+                <div class="composite-create-footer">
+                    <button class="btn btn-secondary" data-action="cancel">取消</button>
+                    <button class="btn btn-primary" data-action="create">创建</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.querySelector('.composite-create-close').addEventListener('click', () => modal.remove());
+        modal.querySelector('[data-action="cancel"]').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+        
+        modal.querySelector('[data-action="create"]').addEventListener('click', () => {
+            const title = document.getElementById('picker-title').value || '随机抽取';
+            const namesText = document.getElementById('picker-names').value || '张三\n李四';
+            const animation = document.getElementById('picker-animation').value;
+            const allowRepeat = document.getElementById('picker-repeat').checked;
+            
+            const names = namesText.split('\n').map(n => n.trim()).filter(n => n);
+            
+            if (names.length < 2) {
+                alert('请至少输入两个名字');
+                return;
+            }
+            
+            this.createRandomPickerComponent(title, names, animation, allowRepeat);
+            modal.remove();
+        });
+    },
+    
+    createRandomPickerComponent(title, names, animation, allowRepeat) {
+        const state = this.store.getState();
+        if (!state.activeSlideId) return;
+        
+        if (!window.CompositeComponents) {
+            alert('组合控件模块未加载');
+            return;
+        }
+        
+        const picker = CompositeComponents.createRandomPicker({
+            title,
+            names,
+            style: animation,
+            x: 400,
+            y: 150,
+            width: 400
+        });
+        
+        // 添加所有元素到幻灯片
+        picker.elements.forEach(element => {
+            // 调整位置
+            element.style.x += 400;
+            element.style.y += 150;
+            // 存储元数据
+            if (element.id.includes('-title')) {
+                element.metadata = {
+                    names,
+                    allowRepeat,
+                    animationStyle: animation
+                };
+            }
+            this.store.addElement(state.activeSlideId, element);
+        });
     }
 };
 

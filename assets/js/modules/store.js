@@ -423,12 +423,61 @@ class EditorStore {
         this.notify();
     }
 
-    deleteElement(slideId, elementId) {
+    deleteElement(slideId, elementId, forceDelete = false) {
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
+        
+        const element = slide.elements.find(e => e.id === elementId);
+        
+        // 检查是否为组合控件的子元素
+        if (element && element.isCompositeChild && !forceDelete) {
+            const compositeParent = element.compositeParent;
+            const compositeType = element.compositeType;
+            
+            // 显示删除确认对话框
+            if (window.CompositeComponents) {
+                window.CompositeComponents.showDeleteConfirm(
+                    compositeType,
+                    () => {
+                        // 确认删除 - 删除所有相关元素
+                        this.deleteCompositeElements(slideId, compositeParent);
+                    }
+                );
+                return; // 等待用户确认
+            }
+        }
+        
         slide.elements = slide.elements.filter(e => e.id !== elementId);
         this.pushHistory();
         if (this.activeElementId === elementId) this.activeElementId = null;
+        this.notify();
+    }
+    
+    deleteCompositeElements(slideId, parentId) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        // 删除所有属于该组合控件的元素
+        slide.elements = slide.elements.filter(e => e.compositeParent !== parentId);
+        this.pushHistory();
+        this.activeElementId = null;
+        this.notify();
+    }
+    
+    releaseCompositeElements(slideId, parentId) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        // 移除组合控件标记，使元素变为独立元素
+        slide.elements.forEach(e => {
+            if (e.compositeParent === parentId) {
+                delete e.isCompositeChild;
+                delete e.compositeParent;
+                delete e.compositeType;
+            }
+        });
+        
+        this.pushHistory();
         this.notify();
     }
 

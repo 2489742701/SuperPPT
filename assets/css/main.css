@@ -2615,3 +2615,458 @@ body {
 [data-theme="dark"] .master-image-preview .placeholder-text {
     color: var(--zinc-500);
 }
+
+/* ==================== 欢迎页暗色模式 ==================== */
+
+[data-theme="dark"] .welcome-page {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+[data-theme="dark"] .welcome-btn {
+    background: var(--zinc-800);
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .welcome-btn:hover {
+    background: var(--zinc-700);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .welcome-btn.primary {
+    background: var(--blue-600);
+    color: white;
+}
+
+[data-theme="dark"] .welcome-btn.primary:hover {
+    background: var(--blue-500);
+}
+
+[data-theme="dark"] .recent-file-card {
+    background: var(--zinc-800);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .recent-file-card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .recent-file-thumbnail {
+    background: var(--zinc-700);
+}
+
+[data-theme="dark"] .recent-file-error {
+    color: var(--zinc-500);
+}
+
+[data-theme="dark"] .recent-file-name {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .recent-file-meta {
+    color: var(--text-tertiary);
+}
+
+/* ==================== 按钮暗色模式 ==================== */
+
+[data-theme="dark"] .btn-secondary {
+    background: var(--zinc-700);
+    color: var(--text-primary);
+    border: 1px solid var(--zinc-600);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: var(--zinc-600);
+    border-color: var(--zinc-500);
+}
+
+[data-theme="dark"] .btn-primary {
+    background: var(--blue-600);
+    color: white;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: var(--blue-500);
+}
+
+/* ==================== 模态框暗色模式 ==================== */
+
+[data-theme="dark"] .modal-content {
+    background: var(--bg-secondary);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: var(--zinc-700);
+}
+
+[data-theme="dark"] .modal-header h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-body {
+    border-bottom-color: var(--zinc-700);
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top-color: var(--zinc-700);
+}
+
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select {
+    background: var(--bg-tertiary);
+    border-color: var(--zinc-600);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-input:focus,
+[data-theme="dark"] .form-select:focus {
+    border-color: var(--blue-500);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .form-label,
+[data-theme="dark"] .form-row label {
+    color: var(--text-secondary);
+}
+
+/* ==================== 组合控件样式 ==================== */
+
+/* 组合控件删除确认对话框 */
+.composite-delete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.composite-delete-content {
+    background: var(--bg-primary);
+    padding: 32px;
+    border-radius: 16px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.composite-delete-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.composite-delete-content h3 {
+    margin: 0 0 12px;
+    font-size: 20px;
+    color: var(--text-primary);
+}
+
+.composite-delete-content p {
+    margin: 0 0 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.composite-delete-warning {
+    color: var(--red-500) !important;
+    font-weight: 500;
+}
+
+.composite-delete-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+}
+
+.composite-delete-buttons .btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+}
+
+.composite-delete-buttons .btn-secondary {
+    background: var(--zinc-200);
+    color: var(--text-primary);
+}
+
+.composite-delete-buttons .btn-secondary:hover {
+    background: var(--zinc-300);
+}
+
+.composite-delete-buttons .btn-danger {
+    background: var(--red-500);
+    color: white;
+}
+
+.composite-delete-buttons .btn-danger:hover {
+    background: #dc2626;
+}
+
+/* 组合控件标识 */
+.composite-indicator {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--amber-500);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+/* 组合控件工具栏 */
+.composite-toolbar {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: var(--bg-primary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+.composite-toolbar-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--zinc-100);
+    color: var(--text-primary);
+}
+
+.composite-toolbar-btn:hover {
+    background: var(--zinc-200);
+}
+
+.composite-toolbar-btn.danger {
+    background: #fef2f2;
+    color: var(--red-500);
+}
+
+.composite-toolbar-btn.danger:hover {
+    background: #fee2e2;
+}
+
+/* 投票组件样式 */
+.poll-container {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.poll-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--zinc-100);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.poll-option:hover {
+    background: var(--zinc-200);
+    transform: translateX(4px);
+}
+
+.poll-option.voted {
+    background: var(--blue-50);
+    border: 2px solid var(--blue-500);
+}
+
+.poll-option-bar {
+    height: 8px;
+    background: var(--blue-500);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.poll-option-text {
+    flex: 1;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.poll-option-count {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* 随机名单组件样式 */
+.picker-container {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.picker-display {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--blue-500);
+    padding: 24px;
+    background: var(--blue-50);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.picker-display.spinning {
+    animation: picker-spin 0.1s linear infinite;
+}
+
+@keyframes picker-spin {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.picker-button {
+    padding: 12px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    background: var(--blue-500);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.picker-button:hover {
+    background: var(--blue-600);
+    transform: scale(1.05);
+}
+
+.picker-button:active {
+    transform: scale(0.98);
+}
+
+/* 组合控件创建对话框 */
+.composite-create-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.composite-create-content {
+    background: var(--bg-primary);
+    padding: 24px;
+    border-radius: 16px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.composite-create-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.composite-create-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.composite-create-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.composite-create-body {
+    margin-bottom: 20px;
+}
+
+.composite-create-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* 名单编辑器 */
+.names-editor {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.names-editor:focus {
+    outline: none;
+    border-color: var(--blue-500);
+}
+
+.names-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+}
+
+/* 暗色主题适配 */
+[data-theme="dark"] .poll-option {
+    background: var(--zinc-800);
+}
+
+[data-theme="dark"] .poll-option:hover {
+    background: var(--zinc-700);
+}
+
+[data-theme="dark"] .poll-option.voted {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .picker-display {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="dark"] .composite-delete-content {
+    background: var(--zinc-800);
+}
+
+[data-theme="dark"] .composite-toolbar {
+    background: var(--zinc-800);
+}
