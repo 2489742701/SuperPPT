@@ -15,13 +15,15 @@
     --zinc-700: #3f3f46;
     --zinc-800: #27272a;
     --zinc-900: #18181b;
+    --blue-50: #eff6ff;
     --blue-500: #3b82f6;
     --blue-600: #2563eb;
+    --amber-50: #fef3c7;
+    --amber-500: #f59e0b;
     --red-500: #ef4444;
     --canvas-width: 1200;
     --canvas-height: 675;
     
-    /* 主题变量 - 亮色主题 */
     --bg-primary: #ffffff;
     --bg-secondary: #f4f4f5;
     --bg-tertiary: #e4e4e7;
@@ -914,7 +916,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #1a1a1a;
+    background: var(--zinc-900);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -1052,7 +1054,7 @@ body {
 
 .preview-btn.exit:hover {
     background: rgba(239, 68, 68, 0.35);
-    color: #ef4444;
+    color: var(--red-500);
 }
 
 .preview-slide-counter {
@@ -1851,13 +1853,13 @@ body {
 
 .layout-preview-compare-box.left {
     left: 10px;
-    background: #eff6ff;
+    background: var(--blue-50);
 }
 
 .layout-preview-compare-box.right {
     right: 10px;
-    background: #fef3c7;
-    border-color: #f59e0b;
+    background: var(--amber-50);
+    border-color: var(--amber-500);
 }
 
 .layout-preview-timeline-line {
@@ -2306,7 +2308,7 @@ body {
 
 .master-item.active {
     border-color: var(--blue-500);
-    background: #eff6ff;
+    background: var(--blue-50);
 }
 
 .master-item-preview {
