@@ -2623,23 +2623,27 @@ body {
 }
 
 [data-theme="dark"] .welcome-btn {
-    background: var(--zinc-800);
-    color: var(--text-primary);
+    background: #1f1f1f;
+    color: #ffffff;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid #333;
 }
 
 [data-theme="dark"] .welcome-btn:hover {
-    background: var(--zinc-700);
+    background: #2a2a2a;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    border-color: #444;
 }
 
 [data-theme="dark"] .welcome-btn.primary {
     background: var(--blue-600);
     color: white;
+    border-color: var(--blue-500);
 }
 
 [data-theme="dark"] .welcome-btn.primary:hover {
     background: var(--blue-500);
+    border-color: var(--blue-400);
 }
 
 [data-theme="dark"] .recent-file-card {
