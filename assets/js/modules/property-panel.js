@@ -113,14 +113,14 @@ const PropertyPanel = {
             </div>
             <div class="property-section">
                 <div class="property-section-title">幻灯片母版</div>
-                <div class="property-row">
-                    <span class="property-label">应用母版</span>
-                    <select class="property-input" id="slide-master-select" style="width:120px">
-                        ${masterOptions}
-                    </select>
-                </div>
-                <div class="property-row" style="margin-top:8px;">
-                    <button class="property-btn" id="btn-edit-master" style="flex:1;">编辑母版</button>
+                <div class="property-row" style="flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                        <span class="property-label" style="flex-shrink: 0;">应用母版</span>
+                        <select class="property-input master-select" id="slide-master-select" style="flex: 1; min-width: 0;">
+                            ${masterOptions}
+                        </select>
+                    </div>
+                    <button class="property-btn master-btn" id="btn-edit-master" style="width: 100%; margin-top: 4px;">📝 编辑母版</button>
                 </div>
             </div>
             <div class="property-section">
