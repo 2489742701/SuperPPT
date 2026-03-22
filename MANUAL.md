@@ -174,4 +174,20 @@ Python 后端桥接模块，使用 QWebChannel 与 PyQt6 通信。
 
 ### 2. 多选移动异常
 
-**原因：** activeSelection 中对象的 left/top 是相对于组的
+**原因：** activeSelection 中对象的 left/top 是相对于组的坐标
+
+**解决：** 使用 `getCenterPoint()` 获取绝对坐标，计算边界中心
+
+### 3. 放映崩溃
+
+**原因：** 数据为空或无效时未处理
+
+**解决：** 添加空数据检查和 try-catch 错误捕获
+
+## 运行命令
+
+```bash
+python main.py                    # 正常启动
+python main.py --preview          # 自动打开放映预览
+python main.py --open file.pptjson # 打开指定文件
+```

@@ -3,6 +3,7 @@ import sys
 import json
 import uuid
 import copy
+import datetime
 from typing import Dict, List, Optional, Any
 from jinja2 import Environment, FileSystemLoader, Template
 
@@ -131,6 +132,46 @@ class API:
             slide.add_element(element)
         
         return {"success": True, "presentation": self.presentation.to_dict()}
+
+    # ==================== 母版操作 ====================
+
+    def get_slide_masters(self) -> Dict:
+        """获取所有母版"""
+        return {"success": True, "masters": self.presentation.get_slide_masters()}
+    
+    def get_slide_master(self, master_id: str) -> Dict:
+        """获取指定母版"""
+        master = self.presentation.get_slide_master(master_id)
+        if master:
+            return {"success": True, "master": master}
+        return {"success": False, "message": "母版不存在"}
+    
+    def add_slide_master(self, master: Dict) -> Dict:
+        """添加新母版"""
+        self._save_undo_state()
+        new_master = self.presentation.add_slide_master(master)
+        return {"success": True, "master": new_master, "presentation": self.presentation.to_dict()}
+    
+    def update_slide_master(self, master_id: str, master: Dict) -> Dict:
+        """更新母版"""
+        self._save_undo_state()
+        if self.presentation.update_slide_master(master_id, master):
+            return {"success": True, "presentation": self.presentation.to_dict()}
+        return {"success": False, "message": "母版不存在"}
+    
+    def delete_slide_master(self, master_id: str) -> Dict:
+        """删除母版"""
+        self._save_undo_state()
+        if self.presentation.delete_slide_master(master_id):
+            return {"success": True, "presentation": self.presentation.to_dict()}
+        return {"success": False, "message": "无法删除默认母版或母版不存在"}
+    
+    def apply_master_to_slide(self, slide_id: str, master_id: str) -> Dict:
+        """将母版应用到幻灯片"""
+        self._save_undo_state()
+        if self.presentation.apply_master_to_slide(slide_id, master_id):
+            return {"success": True, "presentation": self.presentation.to_dict()}
+        return {"success": False, "message": "幻灯片或母版不存在"}
 
     def remove_slide(self, slide_id: str) -> Dict:
         self._save_undo_state()
@@ -690,3 +731,60 @@ class API:
     def check_file_exists(self, path: str) -> Dict:
         exists = os.path.exists(path) and os.path.isfile(path)
         return {"success": True, "exists": exists}
+
+    def write_log(self, level: str, module: str, message: str, data: str = "") -> Dict:
+        """
+        写入日志到文件（打包后使用）
+        
+        Args:
+            level: 日志级别 (DEBUG/INFO/WARN/ERROR)
+            module: 模块名称
+            message: 日志消息
+            data: 额外数据（JSON 字符串）
+        
+        Returns:
+            {"success": True/False}
+        """
+        try:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            log_line = f"[{timestamp}] [{level}] [{module}] {message}"
+            if data:
+                log_line += f" {data}"
+            log_line += "\n"
+            
+            if hasattr(sys, '_MEIPASS'):
+                log_dir = os.path.dirname(sys.executable)
+            else:
+                log_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            log_file = os.path.join(log_dir, "ppt_editor.log")
+            
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(log_line)
+            
+            return {"success": True}
+        except Exception as e:
+            print(f"[API] 写入日志失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def clear_log(self) -> Dict:
+        """清空日志文件"""
+        try:
+            if hasattr(sys, '_MEIPASS'):
+                log_dir = os.path.dirname(sys.executable)
+            else:
+                log_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            log_file = os.path.join(log_dir, "ppt_editor.log")
+            
+            if os.path.exists(log_file):
+                os.remove(log_file)
+            
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def is_packaged(self) -> Dict:
+        """检查是否在打包环境中运行"""
+        is_pkg = hasattr(sys, '_MEIPASS')
+        return {"success": True, "packaged": is_pkg}

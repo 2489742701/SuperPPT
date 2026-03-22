@@ -164,3 +164,307 @@ d:\超级项目-网页ppt/
     "id": "slide-xxx",
     "metadata": {
         "layout": "title_subtitle",
+        "backgroundColor": "#ffffff"
+    },
+    "elements": [...]
+}
+```
+
+### 3.3 元素 (Element)
+
+```python
+{
+    "id": "element-xxx",
+    "type": "textbox",  # textbox, shape, image, media, button
+    "style": {
+        "x": 100,
+        "y": 100,
+        "width": 200,
+        "height": 50,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 1,
+        # 文本相关
+        "fontSize": 24,
+        "fontFamily": "Arial",
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "color": "#333333",
+        "lineHeight": 1.5,
+        # 形状相关
+        "fill": "#007acc",
+        "stroke": "#005a9e",
+        "strokeWidth": 2,
+        "borderRadius": 0
+    },
+    "content": "文本内容",
+    "animation": {
+        "type": "none",  # none, fadeIn, slideInLeft, slideInRight, slideInUp, slideInDown, scaleIn
+        "duration": 0.5,
+        "delay": 0
+    }
+}
+```
+
+### 3.4 幻灯片版式
+
+可用版式列表:
+- `title_subtitle` - 标题和副标题
+- `title_content` - 标题和内容
+- `title_content_divider` - 标题、内容和分隔线
+- `two_column` - 两栏布局
+- `section_header` - 章节标题
+- `blank` - 空白版式
+
+---
+
+## 四、命令行工具 (CLI)
+
+### 使用方法
+
+```bash
+python cli.py <command> [options]
+```
+
+### 可用命令
+
+```bash
+# 演示文稿操作
+python cli.py new                          # 创建新演示文稿
+python cli.py open <file>                  # 打开文件
+python cli.py save [file]                  # 保存文件
+python cli.py info                         # 显示信息
+
+# 幻灯片操作
+python cli.py add-slide [layout]           # 添加幻灯片
+python cli.py remove-slide <slide_id>      # 删除幻灯片
+python cli.py list-slides                  # 列出所有幻灯片
+python cli.py move-slide <from> <to>       # 移动幻灯片
+python cli.py duplicate-slide <slide_id>   # 复制幻灯片
+
+# 元素操作
+python cli.py add-element <slide_id> <type> [--content "文本"] [--x 100] [--y 100]
+python cli.py update-element <slide_id> <element_id> [--content "新文本"]
+python cli.py remove-element <slide_id> <element_id>
+
+# 导出操作
+python cli.py export-html <output.html>    # 导出 HTML
+python cli.py export-single <output.html>  # 导出单文件 HTML
+
+# 其他操作
+python cli.py layouts                      # 显示可用版式
+python cli.py undo                         # 撤销
+python cli.py redo                         # 重做
+python cli.py set-metadata --title "标题" --author "作者"
+python cli.py set-animation <slide_id> <element_id> <animation_type>
+```
+
+---
+
+## 五、前端调用方式
+
+### 5.1 通过 QWebChannel 调用
+
+前端 JavaScript 通过 `window.pyApi` 调用后端 API:
+
+```javascript
+// 获取演示文稿
+const presentation = await window.pyApi.get_presentation();
+
+// 添加幻灯片
+const result = await window.pyApi.add_slide(null, 'title_subtitle');
+
+// 添加元素
+await window.pyApi.add_element('slide-xxx', 'textbox', {
+    x: 100, y: 100, width: 200, height: 50
+}, 'Hello World');
+
+// 导出 HTML
+const html = await window.pyApi.export_html();
+
+// 保存文件
+const saveResult = await window.pyApi.save_to_file();
+```
+
+### 5.2 初始化 QWebChannel
+
+```javascript
+// 在 HTML 中引入 qwebchannel.js
+<script src="libs/qwebchannel.js"></script>
+
+// 初始化
+new QWebChannel(qt.webChannelTransport, function(channel) {
+    window.pyApi = channel.objects.pyApi;
+    console.log('Python API 已连接');
+});
+```
+
+---
+
+## 六、main.py 命令行参数
+
+```bash
+python main.py --dev              # 启用开发者模式
+python main.py --auto-test        # 自动创建所有版式幻灯片
+python main.py --demo             # 创建示例演示文稿
+python main.py --new-slides 5     # 创建 5 张幻灯片
+python main.py --layout title_content  # 指定版式
+python main.py --export output.pptjson # 导出到文件
+python main.py --open file.pptjson     # 打开指定文件
+python main.py --headless --export output.pptjson  # 无头模式导出
+python main.py --preview          # 自动打开放映预览模式
+```
+
+---
+
+## 七、类结构
+
+### 7.1 API 类 (src/api.py)
+
+```python
+class API:
+    def __init__(self):
+        self.presentation = Presentation()
+        self.undo_stack = []
+        self.redo_stack = []
+        self.max_undo_steps = 50
+        self._clipboard = None
+        self._file_dialog_parent = None
+```
+
+### 7.2 Presentation 类 (src/presentation.py)
+
+```python
+class Presentation:
+    def __init__(self):
+        self.id = self._generate_id()
+        self.metadata = {}
+        self.slides = []
+        self.current_slide_index = 0
+    
+    def add_slide(self, slide, index=None)
+    def remove_slide(self, slide_id)
+    def get_slide(self, slide_id)
+    def move_slide(self, from_index, to_index)
+    def create_default_slide(self, layout='title_subtitle')
+    def to_dict(self)
+    def to_json(self)
+    @staticmethod
+    def from_dict(data)
+    @staticmethod
+    def from_json(json_str)
+```
+
+### 7.3 Slide 类
+
+```python
+class Slide:
+    def __init__(self):
+        self.id = self._generate_id()
+        self.metadata = {'layout': 'blank', 'backgroundColor': '#ffffff'}
+        self.elements = []
+    
+    def add_element(self, element)
+    def remove_element(self, element_id)
+    def get_element(self, element_id)
+    def to_dict(self)
+    def clone(self)
+```
+
+### 7.4 Element 类
+
+```python
+class Element:
+    def __init__(self, element_type='textbox', style=None, content=None):
+        self.id = self._generate_id()
+        self.type = element_type
+        self.style = style or self._get_default_style(element_type)
+        self.content = content
+        self.animation = {'type': 'none', 'duration': 0.5, 'delay': 0}
+    
+    def update_style(self, **kwargs)
+    def set_animation(self, animation_type, duration=0.5, delay=0)
+    def to_dict(self)
+    def clone(self)
+```
+
+---
+
+## 八、动画类型
+
+| 动画类型 | 说明 |
+|---------|------|
+| `none` | 无动画 |
+| `fadeIn` | 淡入 |
+| `slideInLeft` | 从左侧滑入 |
+| `slideInRight` | 从右侧滑入 |
+| `slideInUp` | 从下方滑入 |
+| `slideInDown` | 从上方滑入 |
+| `scaleIn` | 缩放进入 |
+
+---
+
+## 九、元素类型
+
+| 类型 | 说明 | 主要样式属性 |
+|------|------|-------------|
+| `textbox` | 文本框 | fontSize, fontFamily, color, textAlign |
+| `text` | 文本 | 同 textbox |
+| `shape` | 形状 | fill, stroke, strokeWidth, borderRadius |
+| `image` | 图片 | borderRadius, objectFit |
+| `media` | 媒体 | mediaType, borderRadius, objectFit |
+| `button` | 按钮 | fill, color, fontSize, borderRadius, link |
+
+---
+
+## 十、文件格式
+
+### .pptjson 文件格式
+
+演示文稿保存为 JSON 格式，扩展名为 `.pptjson`:
+
+```json
+{
+    "id": "presentation-xxx",
+    "metadata": {
+        "title": "我的演示文稿",
+        "author": "用户",
+        "createdAt": "2024-01-01T00:00:00",
+        "modifiedAt": "2024-01-01T00:00:00"
+    },
+    "slides": [
+        {
+            "id": "slide-xxx",
+            "metadata": {"layout": "title_subtitle"},
+            "elements": [...]
+        }
+    ],
+    "currentSlideIndex": 0
+}
+```
+
+---
+
+## 十一、依赖项
+
+```
+PyQt6>=6.4.0
+PyQt6-WebEngine>=6.4.0
+Jinja2>=3.0.0
+Pillow>=9.0.0  # 用于生成缩略图
+```
+
+---
+
+## 十二、打包
+
+使用 PyInstaller 打包:
+
+```bash
+python build.py
+# 或
+pyinstaller HTML_PPT_Editor.spec
+```
+
+打包后的可执行文件位于 `dist/` 目录。

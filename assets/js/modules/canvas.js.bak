@@ -54,50 +54,6 @@ const CanvasManager = {
     
     /** @type {number} 最大缩放级别 */
     maxZoom: 4,
-    
-    /** @type {Object|null} 多选组拖动前的中心点（用于计算位移） */
-    _lastGroupCenter: null,
-    
-    /** @type {boolean} 调试模式开关（控制日志输出） */
-    debugMode: false,
-    
-    /** @type {boolean} 是否在打包环境 */
-    _isPackaged: false,
-    
-    /**
-     * 检测是否在打包环境（同步版本，在 init 中调用）
-     */
-    async _checkPackaged() {
-        try {
-            const result = await window.pyApi.is_packaged();
-            this._isPackaged = result.packaged;
-        } catch (e) {
-            this._isPackaged = false;
-        }
-    },
-    
-    /**
-     * 调试日志输出
-     * 开发环境：输出到控制台
-     * 打包环境：写入日志文件
-     * @param {string} message - 日志消息
-     * @param {...any} args - 额外参数
-     */
-    debug(message, ...args) {
-        if (!this.debugMode) return;
-        
-        if (this._isPackaged) {
-            // 打包环境：写入日志文件（不等待结果）
-            try {
-                window.pyApi.write_log('DEBUG', 'CanvasManager', message, args.length > 0 ? JSON.stringify(args) : '');
-            } catch (e) {
-                console.log(`[CanvasManager] ${message}`, ...args);
-            }
-        } else {
-            // 开发环境：输出到控制台
-            console.log(`[CanvasManager] ${message}`, ...args);
-        }
-    },
 
     /**
      * 初始化画布
@@ -107,15 +63,6 @@ const CanvasManager = {
      * @returns {Promise<fabric.Canvas>} 画布实例
      */
     async init() {
-        // 检测是否在开发模式（通过 URL 参数或全局变量）
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('debug') || window.DEBUG_MODE) {
-            this.debugMode = true;
-        }
-        
-        // 检测是否在打包环境
-        this._checkPackaged();
-        
         // 创建 Fabric.js 画布
         this.canvas = new fabric.Canvas('canvas', {
             width: this.slideWidth,
@@ -147,7 +94,7 @@ const CanvasManager = {
             canvasWrapper.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
         }
         
-        this.debug('画布初始化完成');
+        console.log('[CanvasManager] 画布初始化完成');
         
         return this.canvas;
     },
@@ -633,16 +580,6 @@ const CanvasManager = {
             let existingObj = this.canvas.getObjects().find(o => o.elementId === element.id);
             
             if (existingObj) {
-                // 【关键修复】如果元素在多选组中，不要更新其位置
-                // 因为此时元素的 left/top 是相对于组的坐标，不是画布坐标
-                const isInActiveSelection = activeObj && activeObj.type === 'activeSelection' &&
-                    activeObj.getObjects().some(o => o.elementId === element.id);
-                
-                if (isInActiveSelection) {
-                    // 元素在多选组中，跳过位置更新
-                    return;
-                }
-                
                 if (element.type === 'textbox') {
                     const isFixedMode = element.textMode === 'fixed';
                     
@@ -704,73 +641,49 @@ const CanvasManager = {
             }
         });
 
-        // 处理选择状态 - 修复多选/单选切换问题
-        this._isUpdating = true;
-        try {
+        // 处理选择状态
+        if (isInMultiSelect && multiSelectedIds.length > 0) {
+            // 修复：多选状态下，如果 store 中的选中状态与当前一致，保持选择
+            // 这防止了 render 过程中销毁和重建多选组导致的位置问题
             const currentActive = this.canvas.getActiveObject();
-            const isCurrentlyMultiSelect = currentActive && currentActive.type === 'activeSelection';
-            
-            // 情况1：当前是多选状态，且 store 中也是多选
-            if (isCurrentlyMultiSelect && state.selectedElementIds && state.selectedElementIds.length > 1) {
-                const currentIds = currentActive.getObjects()
-                    .filter(o => o.elementId)
-                    .map(o => o.elementId)
-                    .sort();
-                const storeIds = [...state.selectedElementIds].sort();
-                
-                // 如果选中元素相同，保持选择不变
-                if (JSON.stringify(currentIds) === JSON.stringify(storeIds)) {
-                    // 保持现状，不做任何操作
-                } else {
-                    // 选中元素不同，重新创建多选组
-                    const objectsToSelect = this.canvas.getObjects()
-                        .filter(o => state.selectedElementIds.includes(o.elementId));
-                    if (objectsToSelect.length > 1) {
-                        const selection = new fabric.ActiveSelection(objectsToSelect, { canvas: this.canvas });
-                        this.canvas.setActiveObject(selection);
-                        // 【修复】重新创建多选组后记录中心点
-                        this._lastGroupCenter = selection.getCenterPoint();
-                        this.debug('重新创建多选组，记录中心点:', this._lastGroupCenter);
-                    }
-                }
+            if (currentActive && currentActive.type === 'activeSelection') {
+                // 保持当前多选状态，不做任何更改
+                // 这样可以避免多选组被销毁后重新创建导致的位置错乱
             }
-            // 情况2：当前是单选状态，store 中也是单选
-            else if (!isCurrentlyMultiSelect && state.activeElementId) {
-                const currentSelectedId = currentActive?.elementId;
-                if (currentSelectedId !== state.activeElementId) {
-                    const objToSelect = this.canvas.getObjects().find(o => o.elementId === state.activeElementId);
-                    if (objToSelect) {
-                        this.canvas.setActiveObject(objToSelect);
-                    }
-                }
-            }
-            // 情况3：从多选切换到单选
-            else if (isCurrentlyMultiSelect && state.activeElementId && (!state.selectedElementIds || state.selectedElementIds.length <= 1)) {
-                const objToSelect = this.canvas.getObjects().find(o => o.elementId === state.activeElementId);
-                if (objToSelect) {
+        } else if (state.activeElementId) {
+            const objToSelect = this.canvas.getObjects().find(o => o.elementId === state.activeElementId);
+            if (objToSelect && objToSelect !== this.canvas.getActiveObject()) {
+                this._isUpdating = true;
+                try {
                     this.canvas.setActiveObject(objToSelect);
+                } finally {
+                    this._isUpdating = false;
                 }
             }
-            // 情况4：从单选切换到多选
-            else if (!isCurrentlyMultiSelect && state.selectedElementIds && state.selectedElementIds.length > 1) {
-                const objectsToSelect = this.canvas.getObjects()
-                    .filter(o => state.selectedElementIds.includes(o.elementId));
-                if (objectsToSelect.length > 1) {
-                    const selection = new fabric.ActiveSelection(objectsToSelect, { canvas: this.canvas });
+        } else if (state.selectedElementIds && state.selectedElementIds.length > 1) {
+            const objectsToSelect = this.canvas.getObjects()
+                .filter(o => state.selectedElementIds.includes(o.elementId));
+            if (objectsToSelect.length > 1) {
+                this._isUpdating = true;
+                try {
+                    const selection = new fabric.ActiveSelection(objectsToSelect, {
+                        canvas: this.canvas
+                    });
                     this.canvas.setActiveObject(selection);
-                    // 【修复】创建多选组后立即记录中心点
-                    this._lastGroupCenter = selection.getCenterPoint();
-                    this.debug('创建多选组，记录中心点:', this._lastGroupCenter);
+                } finally {
+                    this._isUpdating = false;
                 }
             }
-            // 情况5：无选中状态
-            else if (!state.activeElementId && (!state.selectedElementIds || state.selectedElementIds.length === 0)) {
-                if (currentActive) {
+        } else {
+            const activeObj = this.canvas.getActiveObject();
+            if (!activeObj || (activeObj.type !== 'activeSelection' && activeObj.elementId)) {
+                this._isUpdating = true;
+                try {
                     this.canvas.discardActiveObject();
+                } finally {
+                    this._isUpdating = false;
                 }
             }
-        } finally {
-            this._isUpdating = false;
         }
 
         this.canvas.renderAll();
@@ -872,6 +785,7 @@ const CanvasManager = {
                     break;
                     
                 case 'button':
+                    // 按钮：带圆角的矩形
                     obj = new fabric.Rect({
                         left: left,
                         top: top,
@@ -881,14 +795,6 @@ const CanvasManager = {
                         rx: 4,
                         ry: 4
                     });
-                    break;
-                    
-                case 'table':
-                    obj = this.createTableElement(element, left, top);
-                    break;
-                    
-                case 'chart':
-                    obj = this.createChartElement(element, left, top);
                     break;
                     
                 case 'media':
@@ -957,116 +863,6 @@ const CanvasManager = {
                     }
                     break;
                     
-                case 'table':
-                    // 表格：使用 fabric.Group 组合多个矩形和文本
-                    const tableRows = element.rows || 3;
-                    const tableCols = element.cols || 3;
-                    const cellWidth = width / tableCols;
-                    const cellHeight = height / tableRows;
-                    const tableFill = style.fill || '#ffffff';
-                    const tableStroke = style.stroke || '#d4d4d8';
-                    const tableStrokeWidth = style.strokeWidth || 1;
-                    
-                    const tableObjects = [];
-                    
-                    // 创建表格单元格
-                    for (let r = 0; r < tableRows; r++) {
-                        for (let c = 0; c < tableCols; c++) {
-                            // 单元格背景
-                            const cellRect = new fabric.Rect({
-                                left: left + c * cellWidth,
-                                top: top + r * cellHeight,
-                                width: cellWidth,
-                                height: cellHeight,
-                                fill: tableFill,
-                                stroke: tableStroke,
-                                strokeWidth: tableStrokeWidth,
-                                selectable: false
-                            });
-                            tableObjects.push(cellRect);
-                        }
-                    }
-                    
-                    // 创建表格组
-                    obj = new fabric.Group(tableObjects, {
-                        left: left,
-                        top: top,
-                        selectable: true
-                    });
-                    break;
-                    
-                case 'icon':
-                    // 图标：使用 fabric.Path 或简单的 SVG 图形
-                    const iconColor = style.color || '#333333';
-                    const iconSize = Math.min(width, height);
-                    const iconLeft = left + (width - iconSize) / 2;
-                    const iconTop = top + (height - iconSize) / 2;
-                    
-                    // 内置图标路径
-                    const iconPaths = {
-                        smile: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z',
-                        star: 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
-                        heart: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
-                        check: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
-                        cross: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
-                        arrow: 'M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z',
-                        home: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
-                        settings: 'M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
-                        user: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
-                        mail: 'M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z',
-                        phone: 'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z',
-                        location: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-                        calendar: 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z',
-                        clock: 'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z',
-                        folder: 'M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z',
-                        file: 'M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z',
-                        cloud: 'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z',
-                        download: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
-                        upload: 'M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z',
-                        link: 'M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z',
-                        lock: 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z',
-                        unlock: 'M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z',
-                        search: 'M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z',
-                        trash: 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
-                        edit: 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
-                        add: 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z',
-                        remove: 'M19 13H5v-2h14v2z',
-                        play: 'M8 5v14l11-7z',
-                        pause: 'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
-                        stop: 'M6 6h12v12H6z'
-                    };
-                    
-                    const iconName = element.iconName || 'star';
-                    const pathData = iconPaths[iconName] || iconPaths.star;
-                    
-                    // 创建图标路径
-                    const path = new fabric.Path(pathData, {
-                        left: iconLeft,
-                        top: iconTop,
-                        fill: iconColor,
-                        scaleX: iconSize / 24,
-                        scaleY: iconSize / 24,
-                        selectable: false
-                    });
-                    
-                    // 创建背景
-                    const iconBg = new fabric.Rect({
-                        left: left,
-                        top: top,
-                        width: width,
-                        height: height,
-                        fill: 'transparent',
-                        selectable: false
-                    });
-                    
-                    // 组合图标和背景
-                    obj = new fabric.Group([iconBg, path], {
-                        left: left,
-                        top: top,
-                        selectable: true
-                    });
-                    break;
-                    
                 default:
                     // 未知类型：创建默认矩形
                     obj = new fabric.Rect({
@@ -1115,26 +911,7 @@ const CanvasManager = {
                 const objects = obj.getObjects();
                 const updates = [];
                 
-                this.debug('多选组修改，使用画布中心点计算法');
-                
-                // 【核心修复】使用画布中心点计算法
-                // 1. 获取拖动后的组中心点（当前实际位置）
-                const newCenter = obj.getCenterPoint();
-                
-                // 2. 获取拖动前的组中心点（从 _lastGroupCenter 获取）
-                const oldCenter = this._lastGroupCenter || newCenter;
-                
-                // 3. 计算位移向量（绝对坐标）
-                const deltaX = newCenter.x - oldCenter.x;
-                const deltaY = newCenter.y - oldCenter.y;
-                
-                this.debug('组中心点位移:', {
-                    oldCenter: { x: oldCenter.x, y: oldCenter.y },
-                    newCenter: { x: newCenter.x, y: newCenter.y },
-                    delta: { x: deltaX, y: deltaY }
-                });
-                
-                // 4. 对每个元素应用绝对位移
+                // 关键：在多选组仍然存在时，计算每个对象的绝对位置
                 objects.forEach((o) => {
                     if (!o.elementId) return;
                     
@@ -1142,72 +919,75 @@ const CanvasManager = {
                     const element = slide?.elements.find(el => el.id === o.elementId);
                     if (!element) return;
                     
-                    // 【关键】使用元素的原始位置 + 位移量
-                    const newX = element.style.x + deltaX;
-                    const newY = element.style.y + deltaY;
+                    // 使用 calcTransformMatrix 获取对象的完整变换矩阵
+                    // 这包含了对象自身的变换 + 多选组的变换
+                    const matrix = o.calcTransformMatrix();
+                    const transform = fabric.util.qrDecompose(matrix);
                     
-                    // 计算旋转角度变化
-                    const newAngle = (element.style.angle || 0) + (obj.angle || 0);
+                    // 安全获取缩放值，防止 NaN
+                    const scaleX = transform.scaleX || 1;
+                    const scaleY = transform.scaleY || 1;
+                    const angle = transform.angle || 0;
                     
-                    // 计算缩放后的尺寸
-                    const scaleX = obj.scaleX || 1;
-                    const scaleY = obj.scaleY || 1;
-                    const newWidth = Math.round((element.style.width || 100) * scaleX);
-                    const newHeight = Math.round((element.style.height || 50) * scaleY);
+                    // transform.x/y 是对象的中心点
+                    // 需要转换为左上角坐标
+                    const objWidth = o.width || element.style.width || 100;
+                    const objHeight = o.height || element.style.height || 50;
+                    const scaledWidth = objWidth * scaleX;
+                    const scaledHeight = objHeight * scaleY;
                     
-                    console.log(`[CanvasManager] 元素 ${o.elementId}:`, {
-                        oldPos: { x: element.style.x, y: element.style.y },
-                        newPos: { x: newX, y: newY },
-                        delta: { x: deltaX, y: deltaY }
-                    });
+                    const absoluteX = Math.round((transform.x || 0) - scaledWidth / 2);
+                    const absoluteY = Math.round((transform.y || 0) - scaledHeight / 2);
+                    const absoluteAngle = Math.round(angle);
                     
                     updates.push({
                         elementId: o.elementId,
                         style: {
-                            x: Math.round(newX),
-                            y: Math.round(newY),
-                            width: newWidth,
-                            height: newHeight,
-                            angle: Math.round(newAngle)
-                        }
+                            x: absoluteX,
+                            y: absoluteY,
+                            width: Math.round(scaledWidth),
+                            height: Math.round(scaledHeight),
+                            angle: absoluteAngle
+                        },
+                        // 保存绝对坐标用于后续同步
+                        _absoluteX: absoluteX,
+                        _absoluteY: absoluteY,
+                        _absoluteAngle: absoluteAngle,
+                        _scaledWidth: scaledWidth,
+                        _scaledHeight: scaledHeight
                     });
                 });
                 
-                // 5. 批量更新到 Store
+                // 更新 store
                 updates.forEach(update => {
                     store.updateElement(state.activeSlideId, update.elementId, {
                         style: update.style
                     });
                 });
                 
-                // 6. 解散多选组
-                this.canvas.discardActiveObject();
-                
-                // 7. 设置每个对象的新位置
+                // 关键修复：在多选组仍然存在时，直接设置对象的绝对坐标
+                // 这样当多选组被销毁时，对象已经在正确的位置
                 objects.forEach((o) => {
                     const update = updates.find(u => u.elementId === o.elementId);
                     if (update) {
+                        // 设置对象的绝对坐标
                         o.set({
-                            left: update.style.x,
-                            top: update.style.y,
+                            left: update._absoluteX,
+                            top: update._absoluteY,
                             scaleX: 1,
                             scaleY: 1,
-                            width: update.style.width,
-                            height: update.style.height,
-                            angle: update.style.angle
+                            width: update._scaledWidth,
+                            height: update._scaledHeight,
+                            angle: update._absoluteAngle
                         });
                         o.setCoords();
                     }
                 });
                 
-                // 8. 清除多选状态
-                store.clearSelection();
-                
-                // 9. 清除记录的中心点
-                this._lastGroupCenter = null;
+                // 不要在这里销毁多选组！让用户自然取消选择
+                // 这样可以避免 Fabric.js 重新计算位置时的错误
                 
                 this.canvas.renderAll();
-                this.debug('多选组修改完成');
                 return;
             }
             
@@ -1221,6 +1001,7 @@ const CanvasManager = {
             const newWidth = Math.round((obj.width || element.style.width) * (obj.scaleX || 1));
             const newHeight = Math.round((obj.height || element.style.height) * (obj.scaleY || 1));
             
+            // 更新元素样式
             store.updateElement(state.activeSlideId, obj.elementId, {
                 style: {
                     x: Math.round(obj.left) || element.style.x,
@@ -1231,6 +1012,7 @@ const CanvasManager = {
                 }
             });
             
+            // 重置对象的缩放（已应用到尺寸中）
             obj.set({ 
                 scaleX: 1, 
                 scaleY: 1, 
@@ -1267,9 +1049,6 @@ const CanvasManager = {
                 .filter(o => o.elementId)
                 .map(o => o.elementId);
             store.setMultiSelection(selectedIds);
-            // 【修复】用户通过 Ctrl+点击创建多选组时记录中心点
-            this._lastGroupCenter = activeObject.getCenterPoint();
-            this.debug('onSelectionChanged 记录多选组中心点:', this._lastGroupCenter);
             return;
         }
         
@@ -1327,13 +1106,6 @@ const CanvasManager = {
      * @param {Object} e - 事件对象
      */
     onMouseDown(e) {
-        // 记录多选组的初始中心点（用于计算位移）
-        const obj = e.target;
-        if (obj && obj.type === 'activeSelection') {
-            this._lastGroupCenter = obj.getCenterPoint();
-            this.debug('记录多选组初始中心点:', this._lastGroupCenter);
-        }
-        
         // 右键点击：显示上下文菜单
         if (e.button === 3 && e.target && e.target.elementId) {
             e.e.preventDefault();
@@ -1386,129 +1158,3 @@ const CanvasManager = {
 
 // 导出到全局作用域
 window.CanvasManager = CanvasManager;
-
-CanvasManager.createTableElement = function(element, left, top) {
-    const style = element.style || {};
-    const data = element.content || [];
-    const rows = data.length || 3;
-    const cols = (data[0] || []).length || 4;
-    const cellWidth = style.cellWidth || 100;
-    const cellHeight = style.cellHeight || 40;
-    const width = cols * cellWidth;
-    const height = rows * cellHeight;
-    
-    const group = new fabric.Group([], {
-        left: left,
-        top: top,
-        width: width,
-        height: height
-    });
-    
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const cellLeft = c * cellWidth;
-            const cellTop = r * cellHeight;
-            
-            const rect = new fabric.Rect({
-                left: cellLeft,
-                top: cellTop,
-                width: cellWidth,
-                height: cellHeight,
-                fill: style.fill || '#ffffff',
-                stroke: style.stroke || '#000000',
-                strokeWidth: style.strokeWidth || 1
-            });
-            group.add(rect);
-            
-            const text = data[r]?.[c] || '';
-            if (text) {
-                const textObj = new fabric.Text(text, {
-                    left: cellLeft + cellWidth / 2,
-                    top: cellTop + cellHeight / 2,
-                    fontSize: 12,
-                    originX: 'center',
-                    originY: 'center'
-                });
-                group.add(textObj);
-            }
-        }
-    }
-    
-    return group;
-};
-
-CanvasManager.createChartElement = function(element, left, top) {
-    const style = element.style || {};
-    const content = element.content || {};
-    const chartType = element.chartType || 'bar';
-    const data = content.data || [30, 50, 40, 60, 35];
-    const labels = content.labels || [];
-    const title = content.title || '';
-    
-    const width = style.width || 400;
-    const height = style.height || 300;
-    const fill = style.fill || '#3b82f6';
-    
-    const group = new fabric.Group([], {
-        left: left,
-        top: top,
-        width: width,
-        height: height
-    });
-    
-    const bg = new fabric.Rect({
-        left: 0,
-        top: 0,
-        width: width,
-        height: height,
-        fill: '#ffffff',
-        stroke: '#e4e4e7',
-        strokeWidth: 1
-    });
-    group.add(bg);
-    
-    if (title) {
-        const titleObj = new fabric.Text(title, {
-            left: width / 2,
-            top: 20,
-            fontSize: 16,
-            fontWeight: 'bold',
-            originX: 'center'
-        });
-        group.add(titleObj);
-    }
-    
-    const maxVal = Math.max(...data);
-    const chartHeight = height - 60;
-    const chartWidth = width - 40;
-    const barWidth = chartWidth / data.length - 10;
-    
-    data.forEach((val, i) => {
-        const barHeight = (val / maxVal) * chartHeight;
-        const barLeft = 20 + i * (barWidth + 10);
-        const barTop = height - 30 - barHeight;
-        
-        const bar = new fabric.Rect({
-            left: barLeft,
-            top: barTop,
-            width: barWidth,
-            height: barHeight,
-            fill: fill,
-            rx: 4,
-            ry: 4
-        });
-        group.add(bar);
-        
-        if (labels[i]) {
-            const label = new fabric.Text(labels[i], {
-                left: barLeft + barWidth / 2,
-                top: height - 15,
-                fontSize: 10,
-                originX: 'center'
-            });
-            group.add(label);
-        }
-    });
-    
-    return group;
-};

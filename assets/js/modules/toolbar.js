@@ -59,9 +59,19 @@ const Toolbar = {
                     this.toggleSetting('spaceAdvanceEnabled');
                 } else if (panel === 'animation') {
                     this.toggleSetting('animationEnabled');
+                } else if (panel === 'transition') {
+                    this.toggleSetting('transitionEnabled');
                 } else if (panel === 'smart-guides') {
                     this.toggleSmartGuides();
                 }
+                this.closeAllDropdowns();
+            });
+        });
+        
+        document.querySelectorAll('.dropdown-item[data-action^="transition-"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.action.replace('transition-', '');
+                this.setTransitionType(type);
                 this.closeAllDropdowns();
             });
         });
@@ -76,6 +86,11 @@ const Toolbar = {
 
         document.getElementById('btn-add-button')?.addEventListener('click', () => {
             this.handleAddAction('add-button');
+        });
+        
+        document.querySelector('[data-action="export-pdf"]')?.addEventListener('click', () => {
+            this.exportToPdf();
+            this.closeAllDropdowns();
         });
 
         this.bindShortcutsEvents();
@@ -216,12 +231,25 @@ const Toolbar = {
         const dotClick = document.getElementById('dot-click-advance');
         const dotSpace = document.getElementById('dot-space-advance');
         const dotAnim = document.getElementById('dot-animation');
+        const dotTrans = document.getElementById('dot-transition');
         const dotSmartGuides = document.getElementById('dot-smart-guides');
         
         if (dotClick) dotClick.classList.toggle('active', settings.clickAdvanceEnabled !== false);
         if (dotSpace) dotSpace.classList.toggle('active', settings.spaceAdvanceEnabled !== false);
         if (dotAnim) dotAnim.classList.toggle('active', settings.animationEnabled !== false);
+        if (dotTrans) dotTrans.classList.toggle('active', settings.transitionEnabled !== false);
         if (dotSmartGuides) dotSmartGuides.classList.toggle('active', settings.smartGuidesEnabled !== false);
+        
+        const transType = settings.transitionType || 'fade';
+        ['fade', 'slide', 'zoom', 'flip', 'cube'].forEach(type => {
+            const dot = document.getElementById(`dot-trans-${type}`);
+            if (dot) dot.classList.toggle('active', transType === type);
+        });
+    },
+
+    setTransitionType(type) {
+        this.store.updateSettings({ transitionType: type });
+        this.updateSettingsDots();
     },
 
     openShortcutsModal() {
@@ -320,15 +348,18 @@ const Toolbar = {
                 this.openAlbum();
                 return null;
             },
-            'add-table': { 
-                type: 'table', 
-                content: 'Table', 
-                style: { x: 100, y: 100, width: 300, height: 150, fill: '#f4f4f5', stroke: '#d4d4d8', strokeWidth: 1 } 
+            'add-table': () => {
+                this.openTableModal();
+                return null;
             },
             'add-icon': { 
                 type: 'icon', 
                 iconName: 'smile', 
                 style: { x: 100, y: 100, width: 64, height: 64, color: '#000000' } 
+            },
+            'add-chart': () => {
+                this.openChartModal();
+                return null;
             },
             'add-button': () => {
                 const action = prompt('输入按钮动作 (例如: "next", "prev", "url"):', 'next') || 'next';
@@ -433,6 +464,101 @@ const Toolbar = {
         
         this.updateSettingsDots();
     },
+    
+    /**
+     * 导出为 PDF
+     * 
+     * 实现方式：
+     * 1. 遍历所有幻灯片
+     * 2. 将每张幻灯片渲染为图片
+     * 3. 调用后端保存为 PDF（如果可用）
+     * 4. 否则下载为图片压缩包
+     */
+    async exportToPdf() {
+        const state = this.store.getState();
+        const slides = state.presentation.slides;
+        
+        if (!slides || slides.length === 0) {
+            alert('没有可导出的幻灯片');
+            return;
+        }
+        
+        // 显示进度提示
+        const progressEl = document.createElement('div');
+        progressEl.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 20px 40px;
+            border-radius: 8px; z-index: 10000; font-size: 16px;
+        `;
+        progressEl.textContent = `正在导出... (0/${slides.length})`;
+        document.body.appendChild(progressEl);
+        
+        try {
+            // 尝试使用后端导出
+            if (window.PyBridge && window.PyBridge.isConnected()) {
+                const result = await window.PyBridge.call('export_pdf');
+                if (result && result.success) {
+                    progressEl.textContent = '导出成功！';
+                    setTimeout(() => progressEl.remove(), 1500);
+                    return;
+                }
+            }
+            
+            // 前端导出：将每张幻灯片导出为图片
+            const canvas = window.CanvasManager?.canvas;
+            if (!canvas) {
+                throw new Error('画布未初始化');
+            }
+            
+            const currentSlideId = state.activeSlideId;
+            const images = [];
+            
+            for (let i = 0; i < slides.length; i++) {
+                progressEl.textContent = `正在导出... (${i + 1}/${slides.length})`;
+                
+                // 切换到目标幻灯片
+                this.store.selectSlide(slides[i].id);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // 导出为图片
+                const dataUrl = canvas.toDataURL({
+                    format: 'png',
+                    quality: 1,
+                    multiplier: 2
+                });
+                
+                images.push({
+                    name: `slide_${i + 1}.png`,
+                    data: dataUrl
+                });
+            }
+            
+            // 恢复原来的幻灯片
+            this.store.selectSlide(currentSlideId);
+            
+            // 下载图片（如果没有后端 PDF 支持）
+            images.forEach((img, index) => {
+                const link = document.createElement('a');
+                link.download = img.name;
+                link.href = img.data;
+                link.click();
+                
+                // 延迟下载，避免浏览器阻止
+                if (index < images.length - 1) {
+                    setTimeout(() => {}, 100);
+                }
+            });
+            
+            progressEl.textContent = `已导出 ${slides.length} 张图片`;
+            setTimeout(() => progressEl.remove(), 2000);
+            
+        } catch (err) {
+            console.error('[Toolbar] 导出失败:', err);
+            progressEl.textContent = '导出失败: ' + err.message;
+            progressEl.style.background = 'rgba(200,0,0,0.8)';
+            setTimeout(() => progressEl.remove(), 3000);
+        }
+    },
 
     async startFullscreenPresentation() {
         const state = this.store.getState();
@@ -454,6 +580,155 @@ const Toolbar = {
         } else {
             console.log('[Toolbar] PyBridge 不可用，使用内置预览');
             this.store.setPreview(true, startSlide);
+        }
+    },
+
+    openTableModal() {
+        const modal = document.getElementById('table-modal');
+        if (!modal) return;
+        
+        modal.classList.remove('hidden');
+        this.initTableGridSelector();
+        
+        document.getElementById('btn-cancel-table').onclick = () => modal.classList.add('hidden');
+        document.getElementById('btn-create-table').onclick = () => {
+            this.createTable();
+            modal.classList.add('hidden');
+        };
+        
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    },
+
+    initTableGridSelector() {
+        const container = document.getElementById('table-grid-selector');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'table-grid-cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                
+                cell.addEventListener('mouseenter', () => {
+                    this.highlightTableGrid(row, col);
+                });
+                
+                cell.addEventListener('click', () => {
+                    document.getElementById('table-rows').value = row + 1;
+                    document.getElementById('table-cols').value = col + 1;
+                    this.highlightTableGrid(row, col);
+                });
+                
+                container.appendChild(cell);
+            }
+        }
+    },
+
+    highlightTableGrid(maxRow, maxCol) {
+        const cells = document.querySelectorAll('.table-grid-cell');
+        cells.forEach(cell => {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            cell.classList.toggle('selected', row <= maxRow && col <= maxCol);
+        });
+        
+        const label = document.getElementById('table-size-label');
+        if (label) label.textContent = `${maxRow + 1} x ${maxCol + 1} 表格`;
+    },
+
+    createTable() {
+        const rows = parseInt(document.getElementById('table-rows').value) || 3;
+        const cols = parseInt(document.getElementById('table-cols').value) || 4;
+        const cellWidth = parseInt(document.getElementById('table-cell-width').value) || 100;
+        const cellHeight = parseInt(document.getElementById('table-cell-height').value) || 40;
+        
+        const tableData = [];
+        for (let r = 0; r < rows; r++) {
+            const rowData = [];
+            for (let c = 0; c < cols; c++) {
+                rowData.push('');
+            }
+            tableData.push(rowData);
+        }
+        
+        const element = {
+            type: 'table',
+            content: tableData,
+            style: {
+                x: 100,
+                y: 100,
+                width: cols * cellWidth,
+                height: rows * cellHeight,
+                cellWidth,
+                cellHeight,
+                fill: '#ffffff',
+                stroke: '#000000',
+                strokeWidth: 1
+            }
+        };
+        
+        const state = this.store.getState();
+        if (state.activeSlideId) {
+            this.store.addElement(state.activeSlideId, element);
+        }
+    },
+
+    openChartModal() {
+        const modal = document.getElementById('chart-modal');
+        if (!modal) return;
+        
+        modal.classList.remove('hidden');
+        
+        document.querySelectorAll('.chart-type-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+        });
+        
+        document.getElementById('btn-cancel-chart').onclick = () => modal.classList.add('hidden');
+        document.getElementById('btn-create-chart').onclick = () => {
+            this.createChart();
+            modal.classList.add('hidden');
+        };
+        
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    },
+
+    createChart() {
+        const activeBtn = document.querySelector('.chart-type-btn.active');
+        const chartType = activeBtn?.dataset.type || 'bar';
+        
+        const dataStr = document.getElementById('chart-data').value || '30, 50, 40, 60, 35';
+        const labelsStr = document.getElementById('chart-labels').value || '一月, 二月, 三月, 四月, 五月';
+        const title = document.getElementById('chart-title').value || '';
+        
+        const data = dataStr.split(',').map(v => parseFloat(v.trim()) || 0);
+        const labels = labelsStr.split(',').map(v => v.trim());
+        
+        const element = {
+            type: 'chart',
+            chartType,
+            content: { data, labels, title },
+            style: {
+                x: 100,
+                y: 100,
+                width: 400,
+                height: 300,
+                fill: '#3b82f6'
+            }
+        };
+        
+        const state = this.store.getState();
+        if (state.activeSlideId) {
+            this.store.addElement(state.activeSlideId, element);
         }
     }
 };

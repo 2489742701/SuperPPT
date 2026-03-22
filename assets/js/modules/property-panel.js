@@ -4,9 +4,14 @@ const PropertyPanel = {
         const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
         const element = slide?.elements.find(e => e.id === state.activeElementId);
         
-        const html = element 
-            ? this.renderElementProperties(element, state, store, t)
-            : this.renderSlideProperties(slide, state, store, t);
+        let html;
+        if (state.selectedElementIds && state.selectedElementIds.length > 1) {
+            html = this.renderMultiSelectProperties(state, store, t);
+        } else if (element) {
+            html = this.renderElementProperties(element, state, store, t);
+        } else {
+            html = this.renderSlideProperties(slide, state, store, t);
+        }
         
         const topContent = document.getElementById('property-panel-top-content');
         const rightContent = document.getElementById('property-panel-content');
@@ -15,6 +20,70 @@ const PropertyPanel = {
         if (rightContent) rightContent.innerHTML = html;
         
         this.bindEvents(store, state);
+    },
+    
+    /**
+     * 渲染多选属性面板
+     * 显示对齐、分布等工具
+     */
+    renderMultiSelectProperties(state, store, t) {
+        const count = state.selectedElementIds?.length || 0;
+        return `
+            <div class="property-section">
+                <div class="property-section-title">多选 (${count} 个元素)</div>
+                <div class="property-row" style="justify-content: center; gap: 8px;">
+                    <button class="align-btn" data-align="left" title="左对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="3" x2="3" y2="21"/><rect x="7" y="5" width="14" height="4"/><rect x="7" y="11" width="10" height="4"/><rect x="7" y="17" width="6" height="4"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="center" title="水平居中">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="3" x2="12" y2="21"/><rect x="6" y="5" width="12" height="4"/><rect x="8" y="11" width="8" height="4"/><rect x="5" y="17" width="14" height="4"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="right" title="右对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="21" y1="3" x2="21" y2="21"/><rect x="3" y="5" width="14" height="4"/><rect x="7" y="11" width="10" height="4"/><rect x="11" y="17" width="6" height="4"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="top" title="顶部对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="3" x2="21" y2="3"/><rect x="5" y="7" width="4" height="14"/><rect x="11" y="7" width="4" height="10"/><rect x="17" y="7" width="4" height="6"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="middle" title="垂直居中">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"/><rect x="5" y="6" width="4" height="12"/><rect x="11" y="8" width="4" height="8"/><rect x="17" y="4" width="4" height="16"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-align="bottom" title="底部对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="3" width="4" height="14"/><rect x="11" y="7" width="4" height="10"/><rect x="17" y="11" width="4" height="6"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="property-row" style="justify-content: center; gap: 8px; margin-top: 8px;">
+                    <button class="align-btn" data-distribute="horizontal" title="水平均匀分布">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="8" width="4" height="8"/><rect x="10" y="8" width="4" height="8"/><rect x="17" y="8" width="4" height="8"/>
+                        </svg>
+                    </button>
+                    <button class="align-btn" data-distribute="vertical" title="垂直均匀分布">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="8" y="3" width="8" height="4"/><rect x="8" y="10" width="8" height="4"/><rect x="8" y="17" width="8" height="4"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="property-section">
+                <div class="property-section-title">操作</div>
+                <div class="property-row">
+                    <button class="property-btn" data-action="group-elements">组合</button>
+                    <button class="property-btn" data-action="ungroup-elements">取消组合</button>
+                </div>
+            </div>
+        `;
     },
 
     renderSlideProperties(slide, state, store, t) {
@@ -284,6 +353,28 @@ const PropertyPanel = {
                 }
             });
         }
+        
+        // 多选对齐按钮事件
+        document.querySelectorAll('.align-btn[data-align]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const alignType = btn.dataset.align;
+                const selectedIds = state.selectedElementIds || [];
+                if (selectedIds.length > 1) {
+                    store.alignElements(state.activeSlideId, selectedIds, alignType);
+                }
+            });
+        });
+        
+        // 分布按钮事件
+        document.querySelectorAll('.align-btn[data-distribute]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const distributeType = btn.dataset.distribute;
+                const selectedIds = state.selectedElementIds || [];
+                if (selectedIds.length > 2) {
+                    store.distributeElements(state.activeSlideId, selectedIds, distributeType);
+                }
+            });
+        });
     },
 
     handlePropertyChange(e, store, state) {

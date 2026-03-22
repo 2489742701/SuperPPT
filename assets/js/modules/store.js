@@ -96,7 +96,7 @@ class EditorStore {
     pushHistory() {
         const newHistory = this.history.slice(0, this.historyIndex + 1);
         newHistory.push(JSON.parse(JSON.stringify(this.presentation)));
-        if (newHistory.length > 50) newHistory.shift();
+        if (newHistory.length > 8) newHistory.shift();
         this.history = newHistory;
         this.historyIndex = newHistory.length - 1;
     }
@@ -335,6 +335,23 @@ class EditorStore {
         this.notify();
     }
 
+    updateElements(slideId, updatesList) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide) return;
+        
+        updatesList.forEach(update => {
+            const element = slide.elements.find(e => e.id === update.elementId);
+            if (!element) return;
+            
+            if (update.style) {
+                Object.assign(element.style, update.style);
+            }
+        });
+        
+        this.pushHistory();
+        this.notify();
+    }
+
     deleteElement(slideId, elementId) {
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
@@ -435,6 +452,55 @@ class EditorStore {
             else if (type === 'bottom-center') { e.style.x = (canvasWidth - w) / 2; e.style.y = canvasHeight - h; }
             else if (type === 'bottom-right') { e.style.x = canvasWidth - w; e.style.y = canvasHeight - h; }
         });
+        this.pushHistory();
+        this.notify();
+    }
+    
+    /**
+     * 分布元素
+     * @param {string} slideId - 幻灯片 ID
+     * @param {string[]} elementIds - 要分布的元素 ID 数组
+     * @param {string} type - 分布类型: 'horizontal' 或 'vertical'
+     */
+    distributeElements(slideId, elementIds, type) {
+        const slide = this.presentation.slides.find(s => s.id === slideId);
+        if (!slide || elementIds.length < 3) return;
+        
+        // 获取所有要分布的元素
+        const elements = slide.elements.filter(e => elementIds.includes(e.id));
+        if (elements.length < 3) return;
+        
+        // 按 x 或 y 坐标排序
+        elements.sort((a, b) => {
+            if (type === 'horizontal') return a.style.x - b.style.x;
+            return a.style.y - b.style.y;
+        });
+        
+        // 计算总范围和元素总尺寸
+        if (type === 'horizontal') {
+            const minX = elements[0].style.x;
+            const maxX = elements[elements.length - 1].style.x + (elements[elements.length - 1].style.width || 100);
+            const totalWidth = elements.reduce((sum, e) => sum + (e.style.width || 100), 0);
+            const gap = (maxX - minX - totalWidth) / (elements.length - 1);
+            
+            let currentX = minX;
+            elements.forEach(e => {
+                e.style.x = currentX;
+                currentX += (e.style.width || 100) + gap;
+            });
+        } else {
+            const minY = elements[0].style.y;
+            const maxY = elements[elements.length - 1].style.y + (elements[elements.length - 1].style.height || 50);
+            const totalHeight = elements.reduce((sum, e) => sum + (e.style.height || 50), 0);
+            const gap = (maxY - minY - totalHeight) / (elements.length - 1);
+            
+            let currentY = minY;
+            elements.forEach(e => {
+                e.style.y = currentY;
+                currentY += (e.style.height || 50) + gap;
+            });
+        }
+        
         this.pushHistory();
         this.notify();
     }

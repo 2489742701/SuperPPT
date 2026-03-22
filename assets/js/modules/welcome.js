@@ -6,6 +6,7 @@
  * - 显示最近文件列表
  * - 文件缩略图预览
  * - 文件迁移检测
+ * - 支持跳过欢迎页直接进入编辑
  */
 
 const WelcomePage = {
@@ -17,15 +18,40 @@ const WelcomePage = {
     
     /** @type {number} 最大最近文件数 */
     maxRecentFiles: 18,
+    
+    /** @type {boolean} 是否跳过欢迎页 */
+    skipWelcome: false,
 
     /**
      * 初始化欢迎页面
      */
     init: function() {
+        this.checkUrlParams();
         this.loadSettings();
         this.updateGreeting();
         this.bindEvents();
         this.loadRecentFiles();
+        
+        if (this.skipWelcome) {
+            console.log('[WelcomePage] 检测到跳过欢迎页参数，直接进入编辑场景');
+            this.hide();
+            return;
+        }
+    },
+    
+    checkUrlParams: function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const debug = urlParams.get('debug');
+        const skipWelcome = urlParams.get('skip-welcome');
+        const quickStart = urlParams.get('quick-start');
+        
+        if (skipWelcome === 'true' || quickStart === 'true') {
+            this.skipWelcome = true;
+        }
+        
+        if (debug === 'true') {
+            console.log('[WelcomePage] 前端调试模式已启用');
+        }
     },
 
     /**

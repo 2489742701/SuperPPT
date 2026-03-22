@@ -28,7 +28,7 @@ echo.
 echo [信息] 开始构建...
 echo.
 
-python -m PyInstaller --onefile --windowed --name "HTML_PPT_Editor" --add-data "assets;assets" --add-data "src;src" --add-data "templates;templates" --hidden-import "pywebview" --hidden-import "jinja2" --clean main.py
+python -m PyInstaller --onefile --windowed --name "HTML_PPT_Editor" --add-data "assets;assets" --add-data "src;src" --add-data "templates;templates" --hidden-import "PyQt6" --hidden-import "PyQt6.QtCore" --hidden-import "PyQt6.QtWidgets" --hidden-import "PyQt6.QtWebEngineWidgets" --hidden-import "jinja2" --clean main.py
 
 if errorlevel 1 (
     echo.

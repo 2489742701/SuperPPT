@@ -22,12 +22,17 @@ HTML PPT 编辑器 - PyQt6 主程序入口
 import sys
 import os
 import argparse
+import json
+import time
+from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
 
 from api import API, get_resource_path
+from dev_tools import DebugLogger, DebugTracer, APITester, PerformanceMonitor, trace_function
+from example_generator import ExampleGenerator
 
-from PyQt6.QtCore import QObject, pyqtSlot, QUrl, QVariant, Qt, QTimer
+from PyQt6.QtCore import QObject, pyqtSlot, QUrl, QUrlQuery, QVariant, Qt, QTimer
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineSettings
@@ -215,6 +220,11 @@ class MainWindow:
         # WebChannel 相关
         self.channel = None
         self.api_wrapper = None
+        self._front_debug = False
+
+    def set_front_debug(self, enabled: bool):
+        """启用或禁用前端调试模式"""
+        self._front_debug = enabled
 
     def run(self) -> int:
         """
@@ -267,7 +277,7 @@ class MainWindow:
         
         # 创建 API 包装器并注册到 Channel
         # 注册名称 'pyApi' 将在前端通过 window.pyApi 访问
-        self.api_wrapper = ApiWrapper(self.api, self.web_view)
+        self.api_wrapper = ApiWrapper(self.api, self.web_view, main_window)
         self.api.set_file_dialog_parent(main_window)
         self.channel.registerObject('pyApi', self.api_wrapper)
         
@@ -287,7 +297,16 @@ class MainWindow:
         # 使用 QUrl.fromLocalFile 加载本地文件
         # 注意：必须在设置 WebChannel 之后加载页面
         html_path = get_asset_path("index.html")
-        self.web_view.setUrl(QUrl.fromLocalFile(html_path))
+        html_url = QUrl.fromLocalFile(html_path)
+        
+        # 如果启用了前端调试模式，添加 URL 参数
+        if hasattr(self, '_front_debug') and self._front_debug:
+            url_query = QUrlQuery()
+            url_query.addQueryItem("debug", "true")
+            html_url.setQuery(url_query)
+            print("[PyQt6] 前端调试模式已启用")
+        
+        self.web_view.setUrl(html_url)
 
         # 将 WebView 添加到布局
         layout.addWidget(self.web_view)
@@ -323,17 +342,19 @@ class ApiWrapper(QObject):
         web_view: QWebEngineView 实例（用于可能的回调）
     """
     
-    def __init__(self, api, web_view):
+    def __init__(self, api, web_view, window=None):
         """
         初始化 API 包装器
         
         Args:
             api: API 实例
             web_view: QWebEngineView 实例
+            window: 主窗口实例（可选）
         """
         super().__init__()
         self.api = api
         self.web_view = web_view
+        self.window = window
 
     # ==================== 演示文稿操作 ====================
     
@@ -417,6 +438,38 @@ class ApiWrapper(QObject):
     @pyqtSlot(str, str, result='QVariant')
     def change_slide_layout(self, slide_id: str, layout: str):
         return self.api.change_slide_layout(slide_id, layout)
+
+    # ==================== 母版操作 ====================
+
+    @pyqtSlot(result='QVariant')
+    def get_slide_masters(self):
+        """获取所有母版"""
+        return self.api.get_slide_masters()
+
+    @pyqtSlot(str, result='QVariant')
+    def get_slide_master(self, master_id: str):
+        """获取指定母版"""
+        return self.api.get_slide_master(master_id)
+
+    @pyqtSlot('QVariant', result='QVariant')
+    def add_slide_master(self, master):
+        """添加新母版"""
+        return self.api.add_slide_master(master)
+
+    @pyqtSlot(str, 'QVariant', result='QVariant')
+    def update_slide_master(self, master_id: str, master):
+        """更新母版"""
+        return self.api.update_slide_master(master_id, master)
+
+    @pyqtSlot(str, result='QVariant')
+    def delete_slide_master(self, master_id: str):
+        """删除母版"""
+        return self.api.delete_slide_master(master_id)
+
+    @pyqtSlot(str, str, result='QVariant')
+    def apply_master_to_slide(self, slide_id: str, master_id: str):
+        """将母版应用到幻灯片"""
+        return self.api.apply_master_to_slide(slide_id, master_id)
 
     # ==================== 元素操作 ====================
     
@@ -774,6 +827,34 @@ class ApiWrapper(QObject):
         """
         return self.api.check_file_exists(path)
 
+    # ==================== 日志操作 ====================
+
+    @pyqtSlot(str, str, str, str, result='QVariant')
+    def write_log(self, level: str, module: str, message: str, data: str = ""):
+        """
+        写入日志到文件
+        
+        Args:
+            level: 日志级别
+            module: 模块名称
+            message: 日志消息
+            data: 额外数据
+            
+        Returns:
+            包含 success 的字典
+        """
+        return self.api.write_log(level, module, message, data)
+
+    @pyqtSlot(result='QVariant')
+    def clear_log(self):
+        """清空日志文件"""
+        return self.api.clear_log()
+
+    @pyqtSlot(result='QVariant')
+    def is_packaged(self):
+        """检查是否在打包环境中运行"""
+        return self.api.is_packaged()
+
     # ==================== 放映操作 ====================
 
     @pyqtSlot(int, result='QVariant')
@@ -873,153 +954,26 @@ def parse_args():
                         help='设置 Debug 日志级别 (默认: INFO)')
     parser.add_argument('--auto-inspect', action='store_true', help='自动检查状态：启动后定时输出程序状态')
     parser.add_argument('--debug-stats', action='store_true', help='启动时显示 Debug 统计信息')
+    parser.add_argument('--front-debug', action='store_true', help='启用前端调试模式（输出详细前端日志）')
+    
+    # API 测试参数
+    parser.add_argument('--api-test', action='store_true', help='运行 API 测试套件')
+    parser.add_argument('--benchmark', type=int, nargs='?', const=100, metavar='N',
+                        help='运行性能基准测试（默认 100 次迭代）')
+    parser.add_argument('--export-debug', type=str, nargs='?', const='debug_info.json', metavar='PATH',
+                        help='导出调试信息到文件')
+    
+    # 启动场景参数
+    parser.add_argument('--skip-welcome', action='store_true', help='跳过欢迎页，直接进入编辑场景')
+    parser.add_argument('--quick-start', action='store_true', help='快速启动：跳过欢迎页并创建新演示文稿')
+    
+    # 示例生成参数
+    parser.add_argument('--create-examples', action='store_true', help='创建示例 PPT 文件到 examples 目录')
+    parser.add_argument('--create-intro', action='store_true', help='创建软件介绍 PPT')
+    parser.add_argument('--create-demo', action='store_true', help='创建功能演示 PPT')
+    parser.add_argument('--create-minimal', action='store_true', help='创建最小测试 PPT')
     
     return parser.parse_args()
-
-
-class DebugLogger:
-    """最小单元格 Debug 日志器 - 可自由开关"""
-    
-    _instance = None
-    _enabled = False
-    _log_level = 'INFO'
-    _log_history = []
-    _max_history = 1000
-    
-    LEVELS = {'DEBUG': 0, 'INFO': 1, 'WARN': 2, 'ERROR': 3}
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-    
-    @classmethod
-    def enable(cls, level='INFO'):
-        """启用 Debug 输出"""
-        cls._enabled = True
-        cls._log_level = level
-        print(f"\n[Debug] Debug 模式已启用 (级别: {level})")
-        
-    @classmethod
-    def disable(cls):
-        """禁用 Debug 输出"""
-        cls._enabled = False
-        print("\n[Debug] Debug 模式已禁用")
-        
-    @classmethod
-    def is_enabled(cls):
-        """检查是否启用"""
-        return cls._enabled
-        
-    @classmethod
-    def set_level(cls, level):
-        """设置日志级别"""
-        if level in cls.LEVELS:
-            cls._log_level = level
-            
-    @classmethod
-    def _should_log(cls, level):
-        """检查是否应该记录该级别日志"""
-        return cls._enabled and cls.LEVELS.get(level, 1) >= cls.LEVELS.get(cls._log_level, 1)
-    
-    @classmethod
-    def log(cls, level, module, message, data=None):
-        """记录日志"""
-        if not cls._should_log(level):
-            return
-            
-        timestamp = cls._get_timestamp()
-        prefix = f"[{timestamp}] [{level}] [{module}]"
-        
-        if data is not None:
-            print(f"{prefix} {message}", data)
-        else:
-            print(f"{prefix} {message}")
-            
-        cls._log_history.append({
-            'timestamp': timestamp,
-            'level': level,
-            'module': module,
-            'message': message,
-            'data': data
-        })
-        
-        if len(cls._log_history) > cls._max_history:
-            cls._log_history.pop(0)
-    
-    @classmethod
-    def debug(cls, module, message, data=None):
-        """Debug 级别日志"""
-        cls.log('DEBUG', module, message, data)
-        
-    @classmethod
-    def info(cls, module, message, data=None):
-        """Info 级别日志"""
-        cls.log('INFO', module, message, data)
-        
-    @classmethod
-    def warn(cls, module, message, data=None):
-        """Warn 级别日志"""
-        cls.log('WARN', module, message, data)
-        
-    @classmethod
-    def error(cls, module, message, data=None):
-        """Error 级别日志"""
-        cls.log('ERROR', module, message, data)
-    
-    @classmethod
-    def _get_timestamp(cls):
-        """获取时间戳"""
-        from datetime import datetime
-        return datetime.now().strftime('%H:%M:%S.%f')[:-3]
-    
-    @classmethod
-    def get_history(cls, level=None, limit=50):
-        """获取日志历史"""
-        logs = cls._log_history
-        if level:
-            logs = [l for l in logs if l['level'] == level]
-        return logs[-limit:]
-    
-    @classmethod
-    def clear_history(cls):
-        """清空日志历史"""
-        cls._log_history.clear()
-        print("[Debug] 日志历史已清空")
-
-
-class DebugTracer:
-    """函数调用追踪器 - 最小单元格级别"""
-    
-    def __init__(self, module_name):
-        self.module_name = module_name
-        self.call_count = 0
-        self.error_count = 0
-        
-    def trace(self, func_name, params=None, result=None, error=None):
-        """追踪函数调用"""
-        self.call_count += 1
-        
-        if error:
-            self.error_count += 1
-            DebugLogger.error(self.module_name, f"{func_name}() 调用失败", {
-                'params': params,
-                'error': str(error)
-            })
-        else:
-            DebugLogger.debug(self.module_name, f"{func_name}() 调用成功", {
-                'params': params,
-                'result': result
-            })
-    
-    def get_stats(self):
-        """获取统计信息"""
-        return {
-            'module': self.module_name,
-            'call_count': self.call_count,
-            'error_count': self.error_count,
-            'success_rate': f"{((self.call_count - self.error_count) / self.call_count * 100):.1f}%" if self.call_count > 0 else "N/A"
-        }
 
 
 class DevModeController:
@@ -1205,6 +1159,243 @@ class DevModeController:
             
         print("="*60 + "\n")
         
+    def run_api_test(self):
+        """运行 API 测试套件"""
+        print("\n" + "="*60)
+        print("  [开发者模式] 运行 API 测试")
+        print("="*60)
+        
+        tester = APITester(self.api.api)
+        results = tester.run_all_tests()
+        
+        # 保存测试报告
+        report = tester.get_test_report()
+        report_path = f"api_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        try:
+            with open(report_path, 'w', encoding='utf-8') as f:
+                f.write(report)
+            print(f"\n  测试报告已保存: {report_path}")
+        except Exception as e:
+            print(f"\n  保存报告失败: {e}")
+            
+        return results
+        
+    def benchmark_api(self, iterations=100):
+        """API 性能基准测试"""
+        print("\n" + "="*60)
+        print("  [开发者模式] API 性能基准测试")
+        print(f"  迭代次数: {iterations}")
+        print("="*60)
+        
+        import time
+        
+        # 测试 1: 创建幻灯片性能
+        times = []
+        for i in range(iterations):
+            start = time.time()
+            self.api.add_slide_with_layout(None, 'title_content')
+            times.append(time.time() - start)
+            
+        avg_time = sum(times) / len(times)
+        min_time = min(times)
+        max_time = max(times)
+        
+        print(f"\n  📊 创建幻灯片性能:")
+        print(f"     平均: {avg_time*1000:.2f}ms")
+        print(f"     最小: {min_time*1000:.2f}ms")
+        print(f"     最大: {max_time*1000:.2f}ms")
+        print(f"     总耗时: {sum(times):.3f}s")
+        
+        # 测试 2: 获取演示文稿性能
+        times = []
+        for i in range(iterations):
+            start = time.time()
+            self.api.get_presentation()
+            times.append(time.time() - start)
+            
+        avg_time = sum(times) / len(times)
+        print(f"\n  📊 获取演示文稿性能:")
+        print(f"     平均: {avg_time*1000:.2f}ms")
+        print(f"     最小: {min_time*1000:.2f}ms")
+        print(f"     最大: {max_time*1000:.2f}ms")
+        
+        print("="*60 + "\n")
+        
+    def export_debug_info(self, path='debug_info.json'):
+        """导出调试信息到文件"""
+        debug_info = {
+            'timestamp': datetime.now().isoformat(),
+            'api_stats': {name: tracer.get_stats() for name, tracer in self.tracers.items()},
+            'logs': DebugLogger.get_history(limit=100),
+            'presentation': self.api.api.get_presentation()
+        }
+        
+        try:
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(debug_info, f, ensure_ascii=False, indent=2, default=str)
+            print(f"\n  ✓ 调试信息已导出: {path}")
+        except Exception as e:
+            print(f"\n  ✗ 导出失败: {e}")
+            
+    def create_example_intro(self):
+        """创建软件介绍示例 PPT"""
+        print("\n" + "="*60)
+        print("  [开发者模式] 创建软件介绍 PPT")
+        print("="*60)
+        
+        try:
+            generator = ExampleGenerator()
+            presentation = generator.create_software_intro()
+            
+            # 加载到当前 API
+            json_data = json.dumps(presentation, ensure_ascii=False)
+            result = self.api.api.load_presentation(json_data)
+            
+            if result.get('success'):
+                print("  ✓ 软件介绍 PPT 已创建并加载")
+                print(f"    幻灯片数量: {len(presentation['slides'])}")
+            else:
+                print(f"  ✗ 加载失败: {result.get('message')}")
+                
+        except Exception as e:
+            print(f"  ✗ 创建失败: {e}")
+            
+    def create_example_demo(self):
+        """创建功能演示示例 PPT"""
+        print("\n" + "="*60)
+        print("  [开发者模式] 创建功能演示 PPT")
+        print("="*60)
+        
+        try:
+            generator = ExampleGenerator()
+            presentation = generator.create_feature_demo()
+            
+            # 加载到当前 API
+            json_data = json.dumps(presentation, ensure_ascii=False)
+            result = self.api.api.load_presentation(json_data)
+            
+            if result.get('success'):
+                print("  ✓ 功能演示 PPT 已创建并加载")
+                print(f"    幻灯片数量: {len(presentation['slides'])}")
+            else:
+                print(f"  ✗ 加载失败: {result.get('message')}")
+                
+        except Exception as e:
+            print(f"  ✗ 创建失败: {e}")
+            
+    def create_example_minimal(self):
+        """创建最小测试示例 PPT"""
+        print("\n" + "="*60)
+        print("  [开发者模式] 创建最小测试 PPT")
+        print("="*60)
+        
+        try:
+            generator = ExampleGenerator()
+            presentation = generator.create_minimal_test()
+            
+            # 加载到当前 API
+            json_data = json.dumps(presentation, ensure_ascii=False)
+            result = self.api.api.load_presentation(json_data)
+            
+            if result.get('success'):
+                print("  ✓ 最小测试 PPT 已创建并加载")
+                print(f"    幻灯片数量: {len(presentation['slides'])}")
+            else:
+                print(f"  ✗ 加载失败: {result.get('message')}")
+                
+        except Exception as e:
+            print(f"  ✗ 创建失败: {e}")
+            
+    def create_all_examples_to_files(self):
+        """创建所有示例到文件"""
+        print("\n" + "="*60)
+        print("  [开发者模式] 创建所有示例文件")
+        print("="*60)
+        
+        try:
+            import os
+            
+            output_dir = "examples"
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+                
+            generator = ExampleGenerator()
+            
+            # 创建软件介绍
+            intro = generator.create_software_intro()
+            intro_path = os.path.join(output_dir, "软件介绍.pptjson")
+            generator.save_to_file(intro, intro_path)
+            
+            # 创建功能演示
+            demo = generator.create_feature_demo()
+            demo_path = os.path.join(output_dir, "功能演示.pptjson")
+            generator.save_to_file(demo, demo_path)
+            
+            # 创建最小测试
+            minimal = generator.create_minimal_test()
+            minimal_path = os.path.join(output_dir, "最小测试.pptjson")
+            generator.save_to_file(minimal, minimal_path)
+            
+            print(f"\n  ✓ 所有示例已创建完成")
+            print(f"    输出目录: {os.path.abspath(output_dir)}")
+            print(f"    文件数量: 3")
+            
+        except Exception as e:
+            print(f"  ✗ 创建失败: {e}")
+            
+    def interactive_debug_shell(self):
+        """启动交互式调试 shell"""
+        print("\n" + "="*60)
+        print("  [开发者模式] 交互式调试 Shell")
+        print("="*60)
+        print("  可用命令:")
+        print("    api     - 访问 API 对象")
+        print("    store   - 获取当前状态")
+        print("    logs    - 查看日志历史")
+        print("    stats   - 查看统计信息")
+        print("    test    - 运行 API 测试")
+        print("    exit    - 退出 shell")
+        print("="*60 + "\n")
+        
+        # 注意：实际交互式 shell 需要在主线程外运行
+        # 这里提供一个简化的命令执行接口
+        self._debug_shell_active = True
+        
+    def execute_debug_command(self, command):
+        """执行调试命令"""
+        if not hasattr(self, '_debug_shell_active') or not self._debug_shell_active:
+            return
+            
+        parts = command.strip().split()
+        if not parts:
+            return
+            
+        cmd = parts[0].lower()
+        args = parts[1:]
+        
+        try:
+            if cmd == 'api':
+                print(f"API 对象: {self.api.api}")
+                print(f"可用方法: {[m for m in dir(self.api.api) if not m.startswith('_')]}")
+            elif cmd == 'store':
+                state = self.api.api.get_presentation()
+                print(json.dumps(state, indent=2, ensure_ascii=False, default=str)[:1000])
+            elif cmd == 'logs':
+                logs = DebugLogger.get_history(limit=20)
+                for log in logs:
+                    print(f"[{log['timestamp']}] {log['level']}: {log['message']}")
+            elif cmd == 'stats':
+                self.show_debug_stats()
+            elif cmd == 'test':
+                self.run_api_test()
+            elif cmd == 'exit':
+                self._debug_shell_active = False
+                print("已退出调试 shell")
+            else:
+                print(f"未知命令: {cmd}")
+        except Exception as e:
+            print(f"执行错误: {e}")
+        
     def start_preview(self, slide_index=0):
         """启动放映预览模式"""
         tracer = self.get_tracer('Preview')
@@ -1312,21 +1503,69 @@ def main():
     web_view.page().settings().setAttribute(QWebEngineSettings.WebAttribute.JavascriptCanAccessClipboard, True)
 
     html_path = get_asset_path("index.html")
-    web_view.setUrl(QUrl.fromLocalFile(html_path))
+    html_url = QUrl.fromLocalFile(html_path)
+    
+    # 构建 URL 参数
+    url_query = QUrlQuery()
+    need_query = False
+    
+    # 前端调试模式
+    if args.front_debug:
+        url_query.addQueryItem("debug", "true")
+        need_query = True
+        print("[PyQt6] 前端调试模式已启用")
+    
+    # 跳过欢迎页
+    if args.skip_welcome or args.quick_start:
+        url_query.addQueryItem("skip-welcome", "true")
+        need_query = True
+        print("[PyQt6] 跳过欢迎页")
+    
+    # 快速启动
+    if args.quick_start:
+        url_query.addQueryItem("quick-start", "true")
+        need_query = True
+        print("[PyQt6] 快速启动模式")
+    
+    if need_query:
+        html_url.setQuery(url_query)
+    
+    web_view.setUrl(html_url)
     layout.addWidget(web_view)
     
     if args.dev:
         print("\n" + "="*60)
         print("  开发者模式已启用")
         print("  可用命令:")
-        print("    --auto-test     自动创建所有版式幻灯片")
-        print("    --demo          创建演示文稿示例")
-        print("    --new-slides N  创建 N 张幻灯片")
-        print("    --layout L      指定版式")
-        print("    --export PATH   导出到路径")
-        print("    --debug         启用 Debug 模式")
-        print("    --debug-level L 设置日志级别 (DEBUG/INFO/WARN/ERROR)")
-        print("    --auto-inspect  自动检查状态")
+        print("    --auto-test        自动创建所有版式幻灯片")
+        print("    --demo             创建演示文稿示例")
+        print("    --new-slides N     创建 N 张幻灯片")
+        print("    --layout L         指定版式")
+        print("    --export PATH      导出到路径")
+        print("    --preview          自动打开放映预览")
+        print("    --preview-slide N  从第 N 页开始放映")
+        print("")
+        print("  启动场景命令:")
+        print("    --skip-welcome     跳过欢迎页，直接进入编辑")
+        print("    --quick-start      快速启动：跳过欢迎页并创建新演示文稿")
+        print("")
+        print("  示例生成命令:")
+        print("    --create-examples  创建所有示例 PPT 文件到 examples 目录")
+        print("    --create-intro     创建软件介绍 PPT（7页）")
+        print("    --create-demo      创建功能演示 PPT（4页）")
+        print("    --create-minimal   创建最小测试 PPT（1页）")
+        print("")
+        print("  Debug 命令:")
+        print("    --debug            启用 Debug 模式")
+        print("    --debug-level L    设置日志级别 (DEBUG/INFO/WARN/ERROR)")
+        print("    --auto-inspect     自动检查状态")
+        print("    --debug-stats      显示 Debug 统计信息")
+        print("    --front-debug      启用前端调试模式（输出详细前端日志）")
+        print("")
+        print("  API 测试命令:")
+        print("    --api-test         运行 API 测试套件")
+        print("    --benchmark [N]    运行性能基准测试 (默认 100 次)")
+        print("    --export-debug [P] 导出调试信息到文件")
         print("="*60 + "\n")
     
     main_window.showMaximized()
@@ -1352,12 +1591,38 @@ def main():
         if args.debug_stats and args.debug:
             dev_controller.show_debug_stats()
             
+        # 运行 API 测试（如果指定）
+        if args.api_test:
+            dev_controller.run_api_test()
+            
+        # 运行性能基准测试（如果指定）
+        if args.benchmark:
+            dev_controller.benchmark_api(args.benchmark)
+            
+        # 导出调试信息（如果指定）
+        if args.export_debug:
+            dev_controller.export_debug_info(args.export_debug)
+            
+        # 快速启动：创建新演示文稿
+        if args.quick_start:
+            dev_controller.create_demo_presentation()
+            
+        # 创建示例 PPT
+        if args.create_examples:
+            dev_controller.create_all_examples_to_files()
+        if args.create_intro:
+            dev_controller.create_example_intro()
+        if args.create_demo:
+            dev_controller.create_example_demo()
+        if args.create_minimal:
+            dev_controller.create_example_minimal()
+            
         # 自动打开放映预览（如果指定）
         if args.preview:
             # 延迟一点时间确保幻灯片已创建
             QTimer.singleShot(1000, lambda: dev_controller.start_preview(args.preview_slide))
     
-    if args.dev or args.auto_test or args.demo or args.new_slides > 0 or args.debug or args.preview:
+    if args.dev or args.auto_test or args.demo or args.new_slides > 0 or args.debug or args.preview or args.api_test or args.benchmark or args.export_debug or args.skip_welcome or args.quick_start or args.create_examples or args.create_intro or args.create_demo or args.create_minimal:
         QTimer.singleShot(2000, run_dev_commands)
     
     return app.exec()

@@ -705,6 +705,47 @@ body {
     color: var(--red-500);
 }
 
+.align-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--zinc-50);
+    border: 1px solid var(--zinc-200);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--zinc-600);
+}
+
+.align-btn:hover {
+    background: var(--zinc-100);
+    border-color: var(--zinc-300);
+    color: var(--zinc-900);
+}
+
+.align-btn:active {
+    background: var(--zinc-200);
+}
+
+.property-btn {
+    flex: 1;
+    padding: 6px 12px;
+    background: var(--zinc-50);
+    border: 1px solid var(--zinc-200);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    color: var(--zinc-600);
+}
+
+.property-btn:hover {
+    background: var(--zinc-100);
+    border-color: var(--zinc-300);
+}
+
 .alignment-panel {
     position: absolute;
     top: 50%;
@@ -1819,4 +1860,173 @@ body {
     .layout-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+/* 表格弹窗样式 */
+.table-modal-content {
+    max-width: 400px;
+}
+
+.table-grid-selector {
+    display: grid;
+    grid-template-columns: repeat(8, 20px);
+    gap: 2px;
+    margin: 10px 0;
+}
+
+.table-grid-cell {
+    width: 20px;
+    height: 20px;
+    background: var(--zinc-200);
+    border: 1px solid var(--zinc-300);
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.table-grid-cell.selected {
+    background: var(--blue-500);
+    border-color: var(--blue-600);
+}
+
+.table-size-label {
+    text-align: center;
+    font-size: 13px;
+    color: var(--zinc-600);
+    margin-top: 8px;
+}
+
+.table-options {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--zinc-200);
+}
+
+.table-options .form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.table-options .form-row:last-child {
+    margin-bottom: 0;
+}
+
+.table-options .form-input {
+    width: 100px;
+}
+
+/* 图表弹窗样式 */
+.chart-modal-content {
+    max-width: 450px;
+}
+
+.chart-type-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.chart-type-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px;
+    background: white;
+    border: 2px solid var(--zinc-200);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.chart-type-btn:hover {
+    border-color: var(--zinc-300);
+    background: var(--zinc-50);
+}
+
+.chart-type-btn.active {
+    border-color: var(--blue-500);
+    background: var(--blue-50);
+    color: var(--blue-600);
+}
+
+.chart-type-btn span {
+    font-size: 12px;
+}
+
+.chart-data-input,
+.chart-labels-input {
+    margin-bottom: 12px;
+}
+
+.chart-options .form-row {
+    margin-bottom: 0;
+}
+
+/* 表格元素样式 */
+.table-element {
+    border-collapse: collapse;
+    width: 100%;
+    height: 100%;
+}
+
+.table-element td {
+    border: 1px solid var(--zinc-400);
+    padding: 4px 8px;
+    font-size: 12px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table-element td:focus {
+    outline: 2px solid var(--blue-500);
+    outline-offset: -2px;
+}
+
+/* 图表元素样式 */
+.chart-element {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.chart-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+}
+
+.chart-bar {
+    background: var(--blue-500);
+    border-radius: 4px 4px 0 0;
+    min-width: 20px;
+    transition: all 0.2s;
+}
+
+.chart-bar:hover {
+    background: var(--blue-600);
+}
+
+.chart-labels {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 8px;
+    font-size: 10px;
+    color: var(--zinc-600);
 }

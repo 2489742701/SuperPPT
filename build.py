@@ -85,8 +85,10 @@ def install_dependencies():
         print("依赖安装失败，尝试逐个安装...")
         
         dependencies = [
-            "pywebview>=4.0",
+            "PyQt6>=6.0",
+            "PyQt6-WebEngine>=6.0",
             "jinja2>=3.0",
+            "Pillow>=9.0.0",
             "pyinstaller>=6.0"
         ]
         
@@ -113,7 +115,10 @@ def build_executable():
         f'--add-data "assets;assets" '
         f'--add-data "src;src" '
         f'--add-data "templates;templates" '
-        f'--hidden-import "pywebview" '
+        f'--hidden-import "PyQt6" '
+        f'--hidden-import "PyQt6.QtCore" '
+        f'--hidden-import "PyQt6.QtWidgets" '
+        f'--hidden-import "PyQt6.QtWebEngineWidgets" '
         f'--hidden-import "jinja2" '
         f'--clean '
         f'main.py'

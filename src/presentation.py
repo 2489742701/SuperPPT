@@ -153,15 +153,17 @@ class Element:
 
 
 class Slide:
-    def __init__(self, slide_id: str = None, elements: List[Element] = None):
+    def __init__(self, slide_id: str = None, elements: List[Element] = None, master_id: str = None):
         self.id = slide_id or self._generate_id()
         self.elements = elements or []
+        self.master_id = master_id
         self.metadata = {
             "backgroundColor": "#ffffff",
             "width": 1200,
             "height": "auto",
             "minHeight": 675,
-            "transition": "fade"
+            "transition": "fade",
+            "layout": "custom"
         }
 
     def _generate_id(self) -> str:
@@ -185,22 +187,25 @@ class Slide:
         return None
 
     def to_dict(self) -> Dict:
-        return {
+        result = {
             "id": self.id,
             "elements": [elem.to_dict() for elem in self.elements],
             "metadata": copy.deepcopy(self.metadata)
         }
+        if self.master_id:
+            result["masterId"] = self.master_id
+        return result
 
     @classmethod
     def from_dict(cls, data: Dict) -> 'Slide':
-        slide = cls(slide_id=data.get("id"))
+        slide = cls(slide_id=data.get("id"), master_id=data.get("masterId"))
         slide.metadata = data.get("metadata", slide.metadata)
         for elem_data in data.get("elements", []):
             slide.elements.append(Element.from_dict(elem_data))
         return slide
 
     def clone(self) -> 'Slide':
-        new_slide = Slide()
+        new_slide = Slide(master_id=self.master_id)
         new_slide.metadata = copy.deepcopy(self.metadata)
         for elem in self.elements:
             new_slide.elements.append(elem.clone())
@@ -218,6 +223,31 @@ class Presentation:
             "version": "1.0"
         }
         self.current_slide_index = 0
+        self.slide_masters: Dict[str, Dict] = {}
+        self._init_default_masters()
+
+    def _init_default_masters(self):
+        """初始化默认母版"""
+        self.slide_masters = {
+            "default": {
+                "id": "default",
+                "name": "默认母版",
+                "backgroundColor": "#ffffff",
+                "elements": []
+            },
+            "dark": {
+                "id": "dark",
+                "name": "深色母版",
+                "backgroundColor": "#1a1a2e",
+                "elements": []
+            },
+            "gradient": {
+                "id": "gradient",
+                "name": "渐变母版",
+                "backgroundColor": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                "elements": []
+            }
+        }
 
     def add_slide(self, slide: Slide = None, index: int = None) -> Slide:
         new_slide = slide or Slide()
@@ -253,12 +283,54 @@ class Presentation:
             self.slides.insert(to_index, slide)
             return True
         return False
+    
+    def get_slide_masters(self) -> List[Dict]:
+        """获取所有母版"""
+        return list(self.slide_masters.values())
+    
+    def get_slide_master(self, master_id: str) -> Optional[Dict]:
+        """获取指定母版"""
+        return self.slide_masters.get(master_id)
+    
+    def add_slide_master(self, master: Dict) -> Dict:
+        """添加新母版"""
+        master_id = master.get("id") or f"master-{uuid.uuid4().hex[:8]}"
+        master["id"] = master_id
+        self.slide_masters[master_id] = master
+        return master
+    
+    def update_slide_master(self, master_id: str, master: Dict) -> bool:
+        """更新母版"""
+        if master_id in self.slide_masters:
+            master["id"] = master_id
+            self.slide_masters[master_id] = master
+            return True
+        return False
+    
+    def delete_slide_master(self, master_id: str) -> bool:
+        """删除母版"""
+        if master_id in self.slide_masters and master_id != "default":
+            del self.slide_masters[master_id]
+            return True
+        return False
+    
+    def apply_master_to_slide(self, slide_id: str, master_id: str) -> bool:
+        """将母版应用到幻灯片"""
+        slide = self.get_slide(slide_id)
+        master = self.slide_masters.get(master_id)
+        if slide and master:
+            slide.master_id = master_id
+            if "backgroundColor" in master:
+                slide.metadata["backgroundColor"] = master["backgroundColor"]
+            return True
+        return False
 
     def to_dict(self) -> Dict:
         return {
             "slides": [slide.to_dict() for slide in self.slides],
             "metadata": copy.deepcopy(self.metadata),
-            "currentSlideIndex": self.current_slide_index
+            "currentSlideIndex": self.current_slide_index,
+            "slideMasters": copy.deepcopy(self.slide_masters)
         }
 
     @classmethod
@@ -268,6 +340,8 @@ class Presentation:
         presentation.current_slide_index = data.get("currentSlideIndex", 0)
         for slide_data in data.get("slides", []):
             presentation.slides.append(Slide.from_dict(slide_data))
+        if "slideMasters" in data:
+            presentation.slide_masters = data["slideMasters"]
         return presentation
 
     def to_json(self, indent: int = 2) -> str:

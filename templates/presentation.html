@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body { font-family: Arial, sans-serif; background: #000000; display: flex; align-items: center; justify-content: center; }
+        .presentation-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .slide { position: absolute; width: 1200px; height: 675px; background: {{ slide_bg }}; overflow: hidden; transform-origin: center center; display: none; }
+        .slide.active { display: block; }
+        .element { position: absolute; display: flex; align-items: flex-start; justify-content: flex-start; }
+        .element-textbox, .element-text { white-space: pre-wrap; word-wrap: break-word; }
+        .element-shape { width: 100%; height: 100%; }
+        .element-media, .element-image { width: 100%; height: 100%; object-fit: cover; }
+        .element-button { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-size: inherit; }
+        .navigation { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 1000; opacity: 0; transition: opacity 0.3s; }
+        body:hover .navigation { opacity: 1; }
+        .nav-btn { padding: 10px 20px; background: rgba(255,255,255,0.9); border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .nav-btn:hover { background: #fff; transform: scale(1.05); }
+        .slide-counter { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity 0.3s; }
+        body:hover .slide-counter { opacity: 1; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .animate-fadeIn { animation: fadeIn var(--duration, 0.5s) ease-out var(--delay, 0s) both; }
+        .animate-slideInLeft { animation: slideInLeft var(--duration, 0.5s) ease-out var(--delay, 0s) both; }
+        .animate-slideInRight { animation: slideInRight var(--duration, 0.5s) ease-out var(--delay, 0s) both; }
+        .animate-slideInUp { animation: slideInUp var(--duration, 0.5s) ease-out var(--delay, 0s) both; }
+        .animate-slideInDown { animation: slideInDown var(--duration, 0.5s) ease-out var(--delay, 0s) both; }
+        .animate-scaleIn { animation: scaleIn var(--duration, 0.5s) ease-out var(--delay, 0s) both; }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        {% for slide in slides %}
+        <div class="slide{% if loop.first %} active{% endif %}" id="{{ slide.id }}" style="background-color: {{ slide.metadata.get('backgroundColor', '#ffffff') }};">
+            {% for element in slide.elements %}
+            {% set animation = element.animation or {} %}
+            {% set anim_type = animation.get('type', 'none') %}
+            <div class="element element-{{ element.type }}{% if anim_type != 'none' %} animate-{{ anim_type }}{% endif %}" id="{{ element.id }}" style="left: {{ element.style.get('x', 0) }}px; top: {{ element.style.get('y', 0) }}px; width: {{ element.style.get('width', 200) }}px; height: {{ element.style.get('height', 100) }}px; transform: rotate({{ element.style.get('angle', 0) }}deg); opacity: {{ element.style.get('opacity', 1) }}; z-index: {{ element.style.get('zIndex', 1) }};{% if anim_type != 'none' %} --duration: {{ animation.get('duration', 0.5) }}s; --delay: {{ animation.get('delay', 0) }}s;{% endif %}">
+                {% if element.type == 'textbox' or element.type == 'text' %}
+                <div class="element-{{ element.type }}" style="font-size: {{ element.style.get('fontSize', 24) }}px; font-family: {{ element.style.get('fontFamily', 'Arial') }}; font-weight: {{ element.style.get('fontWeight', 'normal') }}; font-style: {{ element.style.get('fontStyle', 'normal') }}; text-align: {{ element.style.get('textAlign', 'left') }}; color: {{ element.style.get('color', '#333333') }}; background-color: {{ element.style.get('backgroundColor', 'transparent') }}; line-height: {{ element.style.get('lineHeight', 1.5) }}; width: 100%; height: 100%;">{{ element.content or '' }}</div>
+                {% elif element.type == 'shape' %}
+                <div class="element-shape" style="background-color: {{ element.style.get('fill', '#007acc') }}; border: {{ element.style.get('strokeWidth', 2) }}px solid {{ element.style.get('stroke', '#005a9e') }}; border-radius: {{ element.style.get('borderRadius', 0) }}px;"></div>
+                {% elif element.type == 'media' or element.type == 'image' %}
+                <img class="element-media" src="{{ element.content or '' }}" style="border-radius: {{ element.style.get('borderRadius', 0) }}px; object-fit: {{ element.style.get('objectFit', 'cover') }};" alt="image">
+                {% elif element.type == 'button' %}
+                <button class="element-button" style="background-color: {{ element.style.get('fill', '#3b82f6') }}; color: {{ element.style.get('color', '#ffffff') }}; font-size: {{ element.style.get('fontSize', 16) }}px; border-radius: {{ element.style.get('borderRadius', 4) }}px;">{{ element.content or '按钮' }}</button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="navigation">
+        <button class="nav-btn" onclick="prevSlide()">上一页</button>
+        <button class="nav-btn" onclick="nextSlide()">下一页</button>
+    </div>
+    
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">{{ slides | length }}</span>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const SLIDE_WIDTH = 1200;
+        const SLIDE_HEIGHT = 675;
+        
+        function scaleSlide() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const scaleX = windowWidth / SLIDE_WIDTH;
+            const scaleY = windowHeight / SLIDE_HEIGHT;
+            const scale = Math.min(scaleX, scaleY);
+            slides.forEach(slide => {
+                slide.style.transform = `scale(${scale})`;
+            });
+        }
+        
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                if (i === index) {
+                    slide.classList.add('active');
+                    slide.style.display = 'block';
+                } else {
+                    slide.classList.remove('active');
+                    slide.style.display = 'none';
+                }
+            });
+            document.getElementById('current-slide').textContent = index + 1;
+            scaleSlide();
+        }
+        
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(currentSlide);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Escape') {
+                window.close();
+            }
+        });
+        
+        document.body.addEventListener('click', (e) => {
+            if (!e.target.closest('.navigation') && !e.target.closest('.nav-btn')) {
+                nextSlide();
+            }
+        });
+        
+        document.body.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            prevSlide();
+        });
+        
+        window.addEventListener('resize', scaleSlide);
+        showSlide(0);
+    </script>
+</body>
+</html>
