@@ -58,6 +58,18 @@ const Preview = {
     
     /** @type {boolean} 是否正在播放切换动画 */
     isTransitioning: false,
+    
+    /** @type {number|null} 切换动画定时器 */
+    _transitionTimeout: null,
+    
+    /** @type {number|null} 进入动画定时器 */
+    _enterTimeout: null,
+    
+    /** @type {MutationObserver|null} 内容变化观察器 */
+    _observer: null,
+    
+    /** @type {Function|null} resize 处理器引用 */
+    _resizeHandler: null,
 
     /**
      * 渲染放映视图
@@ -390,6 +402,16 @@ const Preview = {
         
         this.isTransitioning = true;
         
+        // 清理之前的定时器
+        if (this._transitionTimeout) {
+            clearTimeout(this._transitionTimeout);
+            this._transitionTimeout = null;
+        }
+        if (this._enterTimeout) {
+            clearTimeout(this._enterTimeout);
+            this._enterTimeout = null;
+        }
+        
         const container = document.getElementById('preview-slide-container');
         if (!container) {
             this.store.setPreview(true, newIndex);
@@ -405,17 +427,19 @@ const Preview = {
         container.style.animation = `${anim.out} ${duration}s ease-in-out both`;
         
         // 动画结束后切换内容
-        setTimeout(() => {
+        this._transitionTimeout = setTimeout(() => {
             this.store.setPreview(true, newIndex);
+            this._transitionTimeout = null;
             
             // 添加进入动画
-            setTimeout(() => {
+            this._enterTimeout = setTimeout(() => {
                 const newContainer = document.getElementById('preview-slide-container');
                 if (newContainer) {
                     newContainer.classList.add('slide-transition-in');
                     newContainer.style.animation = `${anim.in} ${duration}s ease-in-out both`;
                 }
                 this.isTransitioning = false;
+                this._enterTimeout = null;
             }, 50);
         }, duration * 1000);
     },
@@ -541,9 +565,40 @@ const Preview = {
         
         const previewSlide = document.getElementById('preview-slide');
         if (previewSlide) {
-            const observer = new MutationObserver(() => this.scalePreview());
-            observer.observe(previewSlide, { childList: true });
+            this._observer = new MutationObserver(() => this.scalePreview());
+            this._observer.observe(previewSlide, { childList: true });
         }
+    },
+    
+    /**
+     * 销毁放映预览（清理资源）
+     * 
+     * 清理所有定时器、事件监听器和观察器。
+     */
+    destroy() {
+        console.log('[Preview] 开始清理资源...');
+        
+        // 清理定时器
+        if (this._transitionTimeout) {
+            clearTimeout(this._transitionTimeout);
+            this._transitionTimeout = null;
+        }
+        if (this._enterTimeout) {
+            clearTimeout(this._enterTimeout);
+            this._enterTimeout = null;
+        }
+        
+        // 清理观察器
+        if (this._observer) {
+            this._observer.disconnect();
+            this._observer = null;
+        }
+        
+        // 重置状态
+        this.isTransitioning = false;
+        this.store = null;
+        
+        console.log('[Preview] 资源清理完成');
     }
 };
 

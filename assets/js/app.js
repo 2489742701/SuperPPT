@@ -480,4 +480,9 @@ window.addEventListener('beforeunload', () => {
     if (window.ThemeManager && typeof window.ThemeManager.destroy === 'function') {
         window.ThemeManager.destroy();
     }
+    
+    // 清理放映预览
+    if (window.Preview && typeof window.Preview.destroy === 'function') {
+        window.Preview.destroy();
+    }
 });
