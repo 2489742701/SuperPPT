@@ -677,6 +677,39 @@
                 </svg>
             </button>
         </div>
+        <div id="preview-context-menu" class="preview-context-menu hidden">
+            <button class="preview-context-item" data-action="first">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>
+                </svg>
+                <span>首页</span>
+            </button>
+            <button class="preview-context-item" data-action="prev">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                <span>上一页</span>
+            </button>
+            <button class="preview-context-item" data-action="next">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+                <span>下一页</span>
+            </button>
+            <button class="preview-context-item" data-action="last">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>
+                </svg>
+                <span>尾页</span>
+            </button>
+            <div class="preview-context-divider"></div>
+            <button class="preview-context-item" data-action="exit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                <span>退出放映</span>
+            </button>
+        </div>
     </div>
     
     <div id="link-modal" class="modal hidden">
@@ -886,6 +919,28 @@
                                 <option value="linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">绿青渐变</option>
                                 <option value="linear-gradient(135deg, #fa709a 0%, #fee140 100%)">橙粉渐变</option>
                                 <option value="linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)">淡彩渐变</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>背景图片</label>
+                            <div class="master-image-section">
+                                <div class="master-image-preview" id="master-image-preview">
+                                    <span class="placeholder-text">无图片</span>
+                                </div>
+                                <div class="master-image-actions">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-select-master-image">选择图片</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-master-image">清除图片</button>
+                                </div>
+                            </div>
+                            <input type="file" id="master-image-input" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="form-row">
+                            <label>图片填充方式</label>
+                            <select id="master-image-fit" class="form-select">
+                                <option value="cover">覆盖填充</option>
+                                <option value="contain">适应大小</option>
+                                <option value="stretch">拉伸填充</option>
+                                <option value="tile">平铺</option>
                             </select>
                         </div>
                         <div class="form-row">

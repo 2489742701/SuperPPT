@@ -6,6 +6,7 @@ const MasterModal = {
     currentMasterId: null,
     state: null,
     store: null,
+    currentImage: null,
     
     init: function() {
         this.bindEvents();
@@ -58,9 +59,41 @@ const MasterModal = {
             self.updatePreview();
         });
         
+        // 图片填充方式
+        document.getElementById('master-image-fit')?.addEventListener('change', () => {
+            self.updatePreview();
+        });
+        
         // 名称输入
         document.getElementById('master-name')?.addEventListener('input', () => {
             // 实时更新预览
+        });
+        
+        // 选择图片按钮
+        document.getElementById('btn-select-master-image')?.addEventListener('click', () => {
+            document.getElementById('master-image-input')?.click();
+        });
+        
+        // 图片文件选择
+        document.getElementById('master-image-input')?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    self.currentImage = event.target.result;
+                    self.updateImagePreview();
+                    self.updatePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 清除图片按钮
+        document.getElementById('btn-clear-master-image')?.addEventListener('click', () => {
+            self.currentImage = null;
+            document.getElementById('master-image-input').value = '';
+            self.updateImagePreview();
+            self.updatePreview();
         });
     },
     
@@ -95,8 +128,10 @@ const MasterModal = {
             item.className = 'master-item' + (master.id === this.currentMasterId ? ' active' : '');
             item.dataset.masterId = master.id;
             
+            const bgStyle = this.getBackgroundStyle(master);
+            
             item.innerHTML = `
-                <div class="master-item-preview" style="background: ${master.backgroundColor || '#ffffff'}"></div>
+                <div class="master-item-preview" style="background: ${bgStyle}; background-size: cover; background-position: center;"></div>
                 <div class="master-item-name">${master.name}</div>
             `;
             
@@ -111,6 +146,13 @@ const MasterModal = {
         if (!this.currentMasterId && Object.keys(masters).length > 0) {
             this.selectMaster(Object.keys(masters)[0]);
         }
+    },
+    
+    getBackgroundStyle: function(master) {
+        if (master.backgroundImage) {
+            return `url('${master.backgroundImage}')`;
+        }
+        return master.backgroundColor || '#ffffff';
     },
     
     selectMaster: function(masterId) {
@@ -128,6 +170,13 @@ const MasterModal = {
         
         // 填充表单
         document.getElementById('master-name').value = master.name || '';
+        
+        // 处理背景图片
+        this.currentImage = master.backgroundImage || null;
+        this.updateImagePreview();
+        
+        // 图片填充方式
+        document.getElementById('master-image-fit').value = master.backgroundImageFit || 'cover';
         
         const bgColor = master.backgroundColor || '#ffffff';
         if (bgColor.startsWith('linear-gradient')) {
@@ -150,13 +199,61 @@ const MasterModal = {
         }
     },
     
+    updateImagePreview: function() {
+        const preview = document.getElementById('master-image-preview');
+        if (!preview) return;
+        
+        if (this.currentImage) {
+            preview.style.backgroundImage = `url('${this.currentImage}')`;
+            preview.innerHTML = '';
+        } else {
+            preview.style.backgroundImage = '';
+            preview.innerHTML = '<span class="placeholder-text">无图片</span>';
+        }
+    },
+    
     updatePreview: function() {
         const preview = document.getElementById('master-preview');
         const gradient = document.getElementById('master-gradient').value;
         const bgColor = document.getElementById('master-bg-color').value;
+        const imageFit = document.getElementById('master-image-fit').value;
         
         if (preview) {
-            preview.style.background = gradient || bgColor;
+            if (this.currentImage) {
+                // 有图片时
+                let bgSize, bgRepeat;
+                switch (imageFit) {
+                    case 'cover':
+                        bgSize = 'cover';
+                        bgRepeat = 'no-repeat';
+                        break;
+                    case 'contain':
+                        bgSize = 'contain';
+                        bgRepeat = 'no-repeat';
+                        break;
+                    case 'stretch':
+                        bgSize = '100% 100%';
+                        bgRepeat = 'no-repeat';
+                        break;
+                    case 'tile':
+                        bgSize = 'auto';
+                        bgRepeat = 'repeat';
+                        break;
+                    default:
+                        bgSize = 'cover';
+                        bgRepeat = 'no-repeat';
+                }
+                preview.style.background = `url('${this.currentImage}') ${bgColor}`;
+                preview.style.backgroundSize = bgSize;
+                preview.style.backgroundRepeat = bgRepeat;
+                preview.style.backgroundPosition = 'center';
+            } else {
+                // 无图片时
+                preview.style.backgroundImage = '';
+                preview.style.background = gradient || bgColor;
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundRepeat = 'no-repeat';
+            }
         }
     },
     
@@ -201,11 +298,14 @@ const MasterModal = {
         const name = document.getElementById('master-name').value || '未命名母版';
         const gradient = document.getElementById('master-gradient').value;
         const bgColor = document.getElementById('master-bg-color').value;
+        const imageFit = document.getElementById('master-image-fit').value;
         
         const master = {
             id: this.currentMasterId,
             name: name,
             backgroundColor: gradient || bgColor,
+            backgroundImage: this.currentImage,
+            backgroundImageFit: imageFit,
             elements: []
         };
         

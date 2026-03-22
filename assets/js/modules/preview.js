@@ -483,6 +483,19 @@ const Preview = {
     },
 
     /**
+     * 跳转到指定页
+     */
+    goToSlide(index) {
+        if (!this.store || this.isTransitioning) return;
+        const state = this.store.getState();
+        const targetIndex = Math.max(0, Math.min(index, state.presentation.slides.length - 1));
+        if (targetIndex !== state.previewSlideIndex) {
+            const direction = targetIndex > state.previewSlideIndex ? 'next' : 'prev';
+            this.transitionTo(targetIndex, direction);
+        }
+    },
+
+    /**
      * 执行幻灯片切换动画
      */
     transitionTo(newIndex, direction) {
@@ -602,14 +615,13 @@ const Preview = {
         if (overlay) {
             overlay.addEventListener('click', (e) => {
                 const target = e.target;
-                const isClickZone = target.closest('.preview-click-zone');
                 const isControls = target.closest('.preview-controls');
                 const isContextMenu = target.closest('.preview-context-menu');
                 
                 if (isContextMenu) return;
                 this.hideContextMenu();
                 
-                if (!isClickZone && !isControls && this.clickAdvanceEnabled) {
+                if (!isControls && this.clickAdvanceEnabled) {
                     this.nextSlide();
                 }
             });
@@ -621,15 +633,40 @@ const Preview = {
                 this.showContextMenu(e.clientX, e.clientY);
             });
         }
+        
+        const slideElement = document.getElementById('preview-slide');
+        if (slideElement) {
+            slideElement.addEventListener('click', (e) => {
+                if (this.clickAdvanceEnabled) {
+                    this.nextSlide();
+                }
+            });
+            
+            slideElement.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.prevSlide();
+            });
+        }
 
         document.querySelectorAll('.preview-context-item').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 const action = btn.dataset.action;
-                if (action === 'prev') this.prevSlide();
-                else if (action === 'next') this.nextSlide();
-                else if (action === 'exit') this.exitPreview();
+                const state = this.store.getState();
+                
+                if (action === 'first') {
+                    this.goToSlide(0);
+                } else if (action === 'last') {
+                    this.goToSlide(state.presentation.slides.length - 1);
+                } else if (action === 'prev') {
+                    this.prevSlide();
+                } else if (action === 'next') {
+                    this.nextSlide();
+                } else if (action === 'exit') {
+                    this.exitPreview();
+                }
                 this.hideContextMenu();
             });
         });
@@ -654,10 +691,9 @@ const Preview = {
 
         window.addEventListener('resize', () => this.scalePreview());
         
-        const previewSlide = document.getElementById('preview-slide');
-        if (previewSlide) {
+        if (slideElement) {
             this._observer = new MutationObserver(() => this.scalePreview());
-            this._observer.observe(previewSlide, { childList: true });
+            this._observer.observe(slideElement, { childList: true });
         }
     },
     
