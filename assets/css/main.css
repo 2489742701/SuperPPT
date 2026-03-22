@@ -2375,3 +2375,44 @@ body {
     border: 1px solid var(--zinc-200);
     transition: background 0.3s;
 }
+
+.master-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.master-modal-header h3 {
+    flex: 1;
+}
+
+.modal-close-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--zinc-500);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.modal-close-btn:hover {
+    background: var(--zinc-100);
+    color: var(--zinc-700);
+}
+
+.master-modal-content .modal-footer {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.master-modal-content .modal-footer .btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 16px;
+    font-size: 13px;
+}

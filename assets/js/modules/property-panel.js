@@ -220,12 +220,26 @@ const PropertyPanel = {
                         </div>
                     </div>
                     ${element.type === 'textbox' ? `
-                    <div class="property-row">
-                        <span class="property-label">${t.properties.textMode}</span>
-                        <select class="property-input" data-prop="textMode" style="width:100px">
-                            <option value="fixed" ${element.textMode === 'fixed' ? 'selected' : ''}>${t.properties.textBox}</option>
-                            <option value="auto" ${element.textMode !== 'fixed' ? 'selected' : ''}>${t.properties.pureText}</option>
-                        </select>
+                    <div class="property-section">
+                        <div class="property-section-title">文本模式</div>
+                        <div class="property-row">
+                            <label class="property-radio-label">
+                                <input type="radio" name="textMode" value="auto" ${element.textMode !== 'fixed' ? 'checked' : ''}>
+                                <span>纯文本模式</span>
+                            </label>
+                        </div>
+                        <div class="property-row" style="font-size:11px;color:#71717a;margin-top:-8px;margin-bottom:8px;">
+                            文字随内容自动调整大小，可自由缩放拉伸
+                        </div>
+                        <div class="property-row">
+                            <label class="property-radio-label">
+                                <input type="radio" name="textMode" value="fixed" ${element.textMode === 'fixed' ? 'checked' : ''}>
+                                <span>文本框模式</span>
+                            </label>
+                        </div>
+                        <div class="property-row" style="font-size:11px;color:#71717a;margin-top:-8px;">
+                            固定宽高，文字自动换行，拖动调整框体大小
+                        </div>
                     </div>
                     ` : ''}
                 </div>
@@ -325,6 +339,13 @@ const PropertyPanel = {
     bindEvents(store, state) {
         document.querySelectorAll('.property-input').forEach(input => {
             input.addEventListener('change', (e) => this.handlePropertyChange(e, store, state));
+        });
+        
+        document.querySelectorAll('input[name="textMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const newTextMode = e.target.value;
+                store.updateElement(state.activeSlideId, state.activeElementId, { textMode: newTextMode });
+            });
         });
         
         document.querySelectorAll('.property-checkbox').forEach(input => {

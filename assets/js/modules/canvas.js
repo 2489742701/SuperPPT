@@ -802,10 +802,8 @@ const CanvasManager = {
             
             switch (element.type) {
                 case 'textbox':
-                    // 文本框：根据 textMode 选择不同的 Fabric 类型
                     const isFixedMode = element.textMode === 'fixed';
                     if (isFixedMode) {
-                        // 文本框模式：固定宽度，可拖动调整大小
                         obj = new fabric.Textbox(element.content || '文本', {
                             left: left,
                             top: top,
@@ -817,10 +815,17 @@ const CanvasManager = {
                             fontStyle: style.fontStyle || 'normal',
                             textAlign: style.textAlign || 'left',
                             lineHeight: style.lineHeight || 1.5,
-                            backgroundColor: style.backgroundColor || 'transparent'
+                            backgroundColor: style.backgroundColor || 'transparent',
+                            lockScalingY: false,
+                            splitByGrapheme: false
+                        });
+                        obj.setControlsVisibility({
+                            mt: true,
+                            mb: true,
+                            ml: true,
+                            mr: true
                         });
                     } else {
-                        // 纯文本模式：自动调整大小，不可拖动调整宽度
                         obj = new fabric.IText(element.content || '文本', {
                             left: left,
                             top: top,
@@ -1218,8 +1223,28 @@ const CanvasManager = {
             const element = slide?.elements.find(el => el.id === obj.elementId);
             if (!element) return;
             
-            const newWidth = Math.round((obj.width || element.style.width) * (obj.scaleX || 1));
-            const newHeight = Math.round((obj.height || element.style.height) * (obj.scaleY || 1));
+            let newWidth, newHeight;
+            
+            if (element.type === 'textbox' && element.textMode === 'fixed') {
+                newWidth = Math.round(obj.width * (obj.scaleX || 1));
+                newHeight = Math.round((obj.height || element.style.height) * (obj.scaleY || 1));
+                
+                obj.set({
+                    width: newWidth,
+                    scaleX: 1,
+                    scaleY: 1
+                });
+            } else {
+                newWidth = Math.round((obj.width || element.style.width) * (obj.scaleX || 1));
+                newHeight = Math.round((obj.height || element.style.height) * (obj.scaleY || 1));
+                
+                obj.set({ 
+                    scaleX: 1, 
+                    scaleY: 1, 
+                    width: newWidth, 
+                    height: newHeight 
+                });
+            }
             
             store.updateElement(state.activeSlideId, obj.elementId, {
                 style: {
@@ -1229,13 +1254,6 @@ const CanvasManager = {
                     height: newHeight,
                     angle: Math.round(obj.angle) || 0
                 }
-            });
-            
-            obj.set({ 
-                scaleX: 1, 
-                scaleY: 1, 
-                width: newWidth, 
-                height: newHeight 
             });
         } finally {
             this._isUpdating = false;
