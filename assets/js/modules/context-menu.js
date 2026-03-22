@@ -6,6 +6,7 @@
  * 主要功能：
  * - 显示/隐藏右键菜单
  * - 处理菜单项操作（复制、粘贴、删除、退出等）
+ * - 显示/隐藏面板（属性栏、左侧栏、底部栏等）
  * 
  * 菜单项说明：
  * - 上移一层：将元素在图层中上移
@@ -15,6 +16,7 @@
  * - 重置：重置元素到初始状态
  * - 超链接：设置元素链接
  * - 删除：删除选中元素
+ * - 显示/隐藏面板：控制界面面板的显示
  * - 退出：关闭应用程序（通过后端）
  */
 
@@ -37,6 +39,31 @@ const ContextMenu = {
         menu.style.top = y + 'px';
         menu.classList.remove('hidden');
         this.elementId = elementId;
+        
+        this.updateMenuItems();
+    },
+
+    /**
+     * 根据当前状态更新菜单项
+     */
+    updateMenuItems() {
+        const store = window.editor?.store;
+        const state = store?.getState();
+        if (!state) return;
+        
+        const leftPanelItem = document.getElementById('dot-ctx-left');
+        const bottomPanelItem = document.getElementById('dot-ctx-bottom');
+        const propertyPanelItem = document.getElementById('dot-ctx-property');
+        
+        if (leftPanelItem) {
+            leftPanelItem.classList.toggle('active', state.panels.left);
+        }
+        if (bottomPanelItem) {
+            bottomPanelItem.classList.toggle('active', state.panels.bottom);
+        }
+        if (propertyPanelItem) {
+            propertyPanelItem.classList.toggle('active', state.panels.propertyPanelPosition !== 'hidden');
+        }
     },
 
     /**
@@ -128,6 +155,25 @@ const ContextMenu = {
                 // 删除元素
                 if (this.elementId) {
                     store.deleteElement(state.activeSlideId, this.elementId);
+                }
+                break;
+            
+            case 'toggle-left-panel':
+                // 切换左侧栏
+                store.togglePanel('left');
+                break;
+                
+            case 'toggle-bottom-panel':
+                // 切换底部栏
+                store.togglePanel('bottom');
+                break;
+                
+            case 'toggle-property-panel':
+                // 切换属性面板
+                if (state.panels.propertyPanelPosition === 'hidden') {
+                    store.setPropertyPanelPosition('top');
+                } else {
+                    store.setPropertyPanelPosition('hidden');
                 }
                 break;
                 

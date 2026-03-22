@@ -115,12 +115,14 @@ const PyBridge = {
             
             // 检查 qt 对象是否在 window 上
             let checkCount = 0;
-            const checkQt = setInterval(function() {
+            const self = this;
+            this._checkQtInterval = setInterval(function() {
                 checkCount++;
                 console.log('[PyBridge] 检查 qt 对象...', checkCount);
                 
                 if (typeof qt !== 'undefined' && typeof qt.webChannelTransport !== 'undefined') {
-                    clearInterval(checkQt);
+                    clearInterval(self._checkQtInterval);
+                    self._checkQtInterval = null;
                     console.log('[PyBridge] qt 对象已就绪');
                     self.environment = 'pyqt6';
                     
@@ -141,7 +143,8 @@ const PyBridge = {
                     });
                 } else if (checkCount > 50) {
                     // 超时 5 秒
-                    clearInterval(checkQt);
+                    clearInterval(self._checkQtInterval);
+                    self._checkQtInterval = null;
                     console.log('[PyBridge] qt 对象等待超时，使用浏览器模式');
                     self._initBrowserMode();
                 }
@@ -209,6 +212,24 @@ const PyBridge = {
         resolvers.forEach(function(r) {
             r.resolve(success);
         });
+    },
+    
+    /**
+     * 销毁 PyBridge（清理资源）
+     */
+    destroy: function() {
+        // 清理检查定时器
+        if (this._checkQtInterval) {
+            clearInterval(this._checkQtInterval);
+            this._checkQtInterval = null;
+        }
+        
+        // 清理等待的 Promise
+        this.initResolvers = [];
+        this.initialized = false;
+        this.api = null;
+        
+        console.log('[PyBridge] 资源已清理');
     },
 
     /**

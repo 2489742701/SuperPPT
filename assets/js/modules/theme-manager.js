@@ -46,8 +46,18 @@ const ThemeManager = {
         this.loadPreferences();
         this.checkTimeBasedTheme();
         
-        // 每分钟检查一次时间
-        setInterval(() => this.checkTimeBasedTheme(), 60000);
+        // 每分钟检查一次时间（保存引用以便清理）
+        this._themeCheckInterval = setInterval(() => this.checkTimeBasedTheme(), 60000);
+    },
+    
+    /**
+     * 销毁主题管理器（清理资源）
+     */
+    destroy() {
+        if (this._themeCheckInterval) {
+            clearInterval(this._themeCheckInterval);
+            this._themeCheckInterval = null;
+        }
     },
 
     /**

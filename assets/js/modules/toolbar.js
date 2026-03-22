@@ -91,6 +91,14 @@ const Toolbar = {
                 this.closeAllDropdowns();
             });
         });
+        
+        document.querySelectorAll('.dropdown-item[data-action^="animation-"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const animationType = btn.dataset.action.replace('animation-', '');
+                this.setElementAnimation(animationType);
+                this.closeAllDropdowns();
+            });
+        });
 
         document.getElementById('btn-add-button')?.addEventListener('click', () => {
             this.handleAddAction('add-button');
@@ -820,6 +828,35 @@ const Toolbar = {
         if (state.activeSlideId) {
             this.store.addElement(state.activeSlideId, element);
         }
+    },
+    
+    setElementAnimation(animationType) {
+        const state = this.store.getState();
+        if (!state.activeSlideId || !state.activeElementId) {
+            return;
+        }
+        
+        const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+        const element = slide?.elements.find(e => e.id === state.activeElementId);
+        if (!element) return;
+        
+        this.store.updateElement(state.activeSlideId, state.activeElementId, {
+            animation: {
+                type: animationType,
+                duration: element.animation?.duration || 0.5,
+                delay: element.animation?.delay || 0
+            }
+        });
+        
+        this.updateAnimationDots(animationType);
+    },
+    
+    updateAnimationDots(activeType) {
+        const types = ['none', 'fadeIn', 'slideInLeft', 'slideInRight', 'slideInUp', 'slideInDown', 'scaleIn'];
+        types.forEach(type => {
+            const dot = document.getElementById(`dot-anim-${type}`);
+            if (dot) dot.classList.toggle('active', type === activeType);
+        });
     }
 };
 

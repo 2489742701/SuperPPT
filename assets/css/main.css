@@ -899,6 +899,15 @@ body {
     margin: 4px 0;
 }
 
+.context-header {
+    padding: 8px 16px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--zinc-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .preview-overlay {
     position: fixed;
     top: 0;

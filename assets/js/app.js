@@ -419,6 +419,36 @@ class PPTEditor {
             }
         });
     }
+    
+    /**
+     * 销毁编辑器（清理资源）
+     * 
+     * 清理所有定时器、事件监听器和引用，防止内存泄漏。
+     */
+    destroy() {
+        console.log('[PPTEditor] 开始清理资源...');
+        
+        // 清理定时器
+        if (this._renderTimeout) {
+            clearTimeout(this._renderTimeout);
+            this._renderTimeout = null;
+        }
+        if (this._syncTimeout) {
+            clearTimeout(this._syncTimeout);
+            this._syncTimeout = null;
+        }
+        
+        // 清理画布
+        if (CanvasManager && typeof CanvasManager.destroy === 'function') {
+            CanvasManager.destroy();
+        }
+        
+        // 清理引用
+        this.canvas = null;
+        this.store = null;
+        
+        console.log('[PPTEditor] 资源清理完成');
+    }
 }
 
 /**
@@ -430,4 +460,24 @@ window.addEventListener('DOMContentLoaded', () => {
     // 创建全局编辑器实例
     window.editor = new PPTEditor();
     window.editor.init();
+});
+
+/**
+ * 清理所有资源（防止内存泄漏）
+ * 在页面卸载时调用
+ */
+window.addEventListener('beforeunload', () => {
+    if (window.editor && typeof window.editor.destroy === 'function') {
+        window.editor.destroy();
+    }
+    
+    // 清理 PyBridge
+    if (window.PyBridge && typeof window.PyBridge.destroy === 'function') {
+        window.PyBridge.destroy();
+    }
+    
+    // 清理主题管理器
+    if (window.ThemeManager && typeof window.ThemeManager.destroy === 'function') {
+        window.ThemeManager.destroy();
+    }
 });

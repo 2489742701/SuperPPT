@@ -1399,6 +1399,36 @@ const CanvasManager = {
         if (this.canvas) {
             this.canvas.renderAll();
         }
+    },
+    
+    /**
+     * 销毁画布管理器（清理资源）
+     * 
+     * 清理 Fabric.js 画布实例和所有事件监听器。
+     */
+    destroy() {
+        console.log('[CanvasManager] 开始清理资源...');
+        
+        // 清理参考线
+        this.clearGuideLines();
+        this.guideLines = { horizontal: [], vertical: [] };
+        
+        // 清理画布
+        if (this.canvas) {
+            // 移除所有事件监听器
+            this.canvas.off();
+            // 清空画布
+            this.canvas.clear();
+            // 销毁画布
+            this.canvas.dispose();
+            this.canvas = null;
+        }
+        
+        // 重置状态
+        this._isUpdating = false;
+        this.zoomLevel = 1;
+        
+        console.log('[CanvasManager] 资源清理完成');
     }
 };
 
