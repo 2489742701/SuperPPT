@@ -111,7 +111,10 @@ const Preview = {
         if (slide && previewSlide) {
             try {
                 previewSlide.innerHTML = this.renderPreviewContent(slide, settings);
-                setTimeout(() => this.scalePreview(), 10);
+                setTimeout(() => {
+                    this.scalePreview();
+                    this.playPathAnimations();
+                }, 10);
             } catch (err) {
                 console.error('[Preview] 渲染幻灯片失败:', err);
             }
@@ -210,6 +213,8 @@ const Preview = {
             animStyle = `animation: ${animType} ${animDuration}s ease-out ${animDelay}s both;`;
         }
         
+        const pathAnimAttr = el.pathAnimation ? `data-path-animation='${JSON.stringify(el.pathAnimation)}'` : '';
+        
         const elType = el.type || 'shape';
         
         if (elType === 'textbox' || elType === 'text') {
@@ -224,7 +229,7 @@ const Preview = {
             const content = el.content || '';
             
             const textStyle = `font-size:${fontSize}px;color:${color};font-weight:${fontWeight};font-style:${fontStyle};text-align:${textAlign};font-family:${fontFamily};line-height:${lineHeight};background:${bgColor};white-space:pre-wrap;word-wrap:break-word;width:100%;height:100%;display:flex;align-items:center;`;
-            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}"><div style="${textStyle}">${content}</div></div>`;
+            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}" ${pathAnimAttr}><div style="${textStyle}">${content}</div></div>`;
         } else if (elType === 'shape') {
             const fill = style.fill || '#007acc';
             const strokeWidth = style.strokeWidth || 0;
@@ -233,7 +238,7 @@ const Preview = {
             const borderRadius = shapeType === 'circle' ? '50%' : (style.borderRadius || 0) + 'px';
             
             const shapeStyle = `background:${fill};border:${strokeWidth}px solid ${stroke};border-radius:${borderRadius};width:100%;height:100%;`;
-            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}"><div style="${shapeStyle}"></div></div>`;
+            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}" ${pathAnimAttr}><div style="${shapeStyle}"></div></div>`;
         } else if (elType === 'image' || elType === 'media') {
             const src = el.content || '';
             const objectFit = style.objectFit || 'cover';
@@ -241,7 +246,7 @@ const Preview = {
             
             if (src) {
                 const imgStyle = `width:100%;height:100%;object-fit:${objectFit};border-radius:${borderRadius}px;`;
-                return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}"><img src="${src}" style="${imgStyle}" alt=""></div>`;
+                return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}" ${pathAnimAttr}><img src="${src}" style="${imgStyle}" alt=""></div>`;
             }
         } else if (elType === 'button') {
             const fill = style.fill || '#3b82f6';
@@ -251,7 +256,7 @@ const Preview = {
             const content = el.content || '按钮';
             
             const btnStyle = `background:${fill};color:${color};font-size:${fontSize}px;border-radius:${borderRadius}px;width:100%;height:100%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;`;
-            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}"><button style="${btnStyle}">${content}</button></div>`;
+            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}" ${pathAnimAttr}><button style="${btnStyle}">${content}</button></div>`;
         } else if (elType === 'table') {
             const rows = el.rows || 3;
             const cols = el.cols || 3;
@@ -261,7 +266,7 @@ const Preview = {
             const tableStroke = style.stroke || '#d4d4d8';
             const tableStrokeWidth = style.strokeWidth || 1;
             
-            let tableHtml = `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}">`;
+            let tableHtml = `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}" ${pathAnimAttr}>`;
             tableHtml += `<table style="width:100%;height:100%;border-collapse:collapse;">`;
             
             for (let r = 0; r < rows; r++) {
@@ -315,13 +320,99 @@ const Preview = {
             const pathData = iconPaths[iconName] || iconPaths.star;
             const iconSize = Math.min(width, height);
             
-            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}">
+            return `<div class="preview-element ${animClass}" style="${baseStyle};${animStyle}" ${pathAnimAttr}>
                 <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="${iconColor}" style="display:block;margin:auto;">
                     <path d="${pathData}"/>
                 </svg>
             </div>`;
         }
         return '';
+    },
+
+    /**
+     * 播放所有路径动画
+     */
+    playPathAnimations() {
+        const elements = document.querySelectorAll('[data-path-animation]');
+        elements.forEach(el => {
+            try {
+                const pathAnim = JSON.parse(el.dataset.pathAnimation);
+                if (pathAnim && pathAnim.path && pathAnim.path.length >= 2) {
+                    this.playElementPathAnimation(el, pathAnim);
+                }
+            } catch (e) {
+                console.warn('[Preview] 解析路径动画失败:', e);
+            }
+        });
+    },
+
+    /**
+     * 播放单个元素的路径动画
+     */
+    playElementPathAnimation(element, pathAnimation) {
+        if (!pathAnimation || !pathAnimation.path || pathAnimation.path.length < 2) return;
+        
+        const path = pathAnimation.path;
+        const duration = (pathAnimation.duration || 3) * 1000;
+        const startTime = performance.now();
+        
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const easedProgress = this.easeInOutSine(progress);
+            const position = this.getPositionOnPath(path, easedProgress);
+            
+            element.style.left = position.x + 'px';
+            element.style.top = position.y + 'px';
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    },
+
+    /**
+     * 缓动函数
+     */
+    easeInOutSine(t) {
+        return -(Math.cos(Math.PI * t) - 1) / 2;
+    },
+
+    /**
+     * 获取路径上的位置
+     */
+    getPositionOnPath(path, progress) {
+        if (path.length < 2) return path[0] || { x: 0, y: 0 };
+        
+        let totalLength = 0;
+        const segments = [];
+        
+        for (let i = 0; i < path.length - 1; i++) {
+            const dx = path[i + 1].x - path[i].x;
+            const dy = path[i + 1].y - path[i].y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            segments.push({ start: path[i], end: path[i + 1], length });
+            totalLength += length;
+        }
+        
+        const targetLength = progress * totalLength;
+        let currentLength = 0;
+        
+        for (const segment of segments) {
+            if (currentLength + segment.length >= targetLength) {
+                const segmentProgress = (targetLength - currentLength) / segment.length;
+                return {
+                    x: segment.start.x + (segment.end.x - segment.start.x) * segmentProgress,
+                    y: segment.start.y + (segment.end.y - segment.start.y) * segmentProgress
+                };
+            }
+            currentLength += segment.length;
+        }
+        
+        return path[path.length - 1];
     },
 
     /**

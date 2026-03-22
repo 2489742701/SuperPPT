@@ -48,6 +48,48 @@ const Toolbar = {
             });
         });
         
+        document.querySelectorAll('.dropdown-item[data-action="new-presentation"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.newPresentation();
+                this.closeAllDropdowns();
+            });
+        });
+        
+        document.querySelectorAll('.dropdown-item[data-action="save-project"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.saveProject();
+                this.closeAllDropdowns();
+            });
+        });
+        
+        document.querySelectorAll('.dropdown-item[data-action="load-project"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.loadProject();
+                this.closeAllDropdowns();
+            });
+        });
+        
+        document.querySelectorAll('.dropdown-item[data-action="save-json"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.saveToJson();
+                this.closeAllDropdowns();
+            });
+        });
+        
+        document.querySelectorAll('.dropdown-item[data-action="load-json"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.loadFromJson();
+                this.closeAllDropdowns();
+            });
+        });
+        
+        document.querySelectorAll('.dropdown-item[data-action="export-folder"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.exportToFolder();
+                this.closeAllDropdowns();
+            });
+        });
+        
         document.querySelectorAll('.dropdown-item[data-action^="toggle-"]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const panel = btn.dataset.action.replace('toggle-', '');
@@ -933,6 +975,115 @@ const Toolbar = {
         } catch (e) {
             // 回退到浏览器打印
             window.print();
+        }
+    },
+    
+    async newPresentation() {
+        if (confirm('确定要新建演示文稿吗？当前未保存的内容将会丢失。')) {
+            this.store.newPresentation();
+        }
+    },
+    
+    async saveProject() {
+        if (!window.pyApi) {
+            alert('保存工程文件功能需要后端支持');
+            return;
+        }
+        
+        try {
+            const result = await window.pyApi.save_project();
+            
+            if (result.success) {
+                alert('工程文件已保存到:\n' + result.path + '\n\n.hppt 是 HTML PPT 专属格式，包含所有嵌入资源。');
+            } else if (result.message !== '未选择文件') {
+                alert('保存失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('保存失败: ' + e.message);
+        }
+    },
+    
+    async loadProject() {
+        if (!window.pyApi) {
+            alert('打开工程文件功能需要后端支持');
+            return;
+        }
+        
+        try {
+            const result = await window.pyApi.load_project();
+            
+            if (result.success) {
+                this.store.loadPresentation(result.presentation);
+                alert('工程文件已加载');
+            } else if (result.message !== '未选择文件') {
+                alert('打开失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('打开失败: ' + e.message);
+        }
+    },
+    
+    async saveToJson() {
+        if (!window.pyApi) {
+            const json = this.store.savePresentation();
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'presentation.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            return;
+        }
+        
+        try {
+            const result = await window.pyApi.save_to_file();
+            
+            if (result.success) {
+                alert('JSON 文件已保存到:\n' + result.file_path);
+            } else if (result.message !== '未选择文件') {
+                alert('保存失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('保存失败: ' + e.message);
+        }
+    },
+    
+    async loadFromJson() {
+        if (!window.pyApi) {
+            alert('打开 JSON 文件功能需要后端支持');
+            return;
+        }
+        
+        try {
+            const result = await window.pyApi.load_from_file();
+            
+            if (result.success) {
+                this.store.loadPresentation(result.data);
+            } else if (result.message !== '未选择文件') {
+                alert('打开失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('打开失败: ' + e.message);
+        }
+    },
+    
+    async exportToFolder() {
+        if (!window.pyApi) {
+            alert('导出文件夹功能需要后端支持');
+            return;
+        }
+        
+        try {
+            const result = await window.pyApi.export_project_to_folder();
+            
+            if (result.success) {
+                alert('工程文件夹已导出到:\n' + result.path);
+            } else if (result.message !== '未选择目录') {
+                alert('导出失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('导出失败: ' + e.message);
         }
     }
 };

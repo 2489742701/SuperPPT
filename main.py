@@ -162,10 +162,44 @@ class PresentationWindow(QMainWindow):
 
 
 class WebEnginePage(QWebEnginePage):
-    """自定义 WebEnginePage 用于捕获 JavaScript 控制台输出"""
+    """
+    自定义 WebEnginePage 用于捕获 JavaScript 控制台输出
+    
+    继承自 QWebEnginePage，重写 javaScriptConsoleMessage 方法，
+    将 JavaScript 控制台消息重定向到 Python 标准输出。
+    
+    这在调试前端代码时非常有用，可以在终端中看到 JavaScript 的
+    console.log、console.warn、console.error 等输出。
+    
+    Attributes:
+        无额外属性，继承自 QWebEnginePage
+    
+    Example:
+        >>> web_view = QWebEngineView()
+        >>> custom_page = WebEnginePage(web_view)
+        >>> web_view.setPage(custom_page)
+        # 现在 JavaScript 的 console.log 会输出到 Python 终端
+    """
     
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-        """重写控制台消息处理方法"""
+        """
+        重写 JavaScript 控制台消息处理方法
+        
+        当 JavaScript 执行 console.log/warn/error 时，此方法会被调用。
+        消息会被格式化后输出到 Python 标准输出。
+        
+        Args:
+            level: 消息级别枚举值
+                - InfoMessageLevel: 普通信息
+                - WarningMessageLevel: 警告
+                - ErrorMessageLevel: 错误
+            message: 消息内容
+            lineNumber: 消息所在行号
+            sourceID: 消息来源文件路径
+        
+        Note:
+            输出格式: [JS LEVEL] message (line N, source)
+        """
         level_name = {
             QWebEnginePage.JavaScriptConsoleMessageLevel.InfoMessageLevel: 'INFO',
             QWebEnginePage.JavaScriptConsoleMessageLevel.WarningMessageLevel: 'WARN',
@@ -684,6 +718,67 @@ class ApiWrapper(QObject):
         """
         return self.api.load_from_file(file_path)
 
+    # ==================== 工程文件操作 ====================
+
+    @pyqtSlot(result='QVariant')
+    def save_project(self):
+        """
+        保存为工程文件（.hppt 格式，ZIP 压缩包）
+        
+        所有资源（图片、视频、音频）都会嵌入到文件中。
+        .hppt 是 HTML PPT 的专属格式，不会被其他软件误打开。
+        
+        Returns:
+            包含 success 和 path 的字典
+        """
+        return self.api.save_project()
+
+    @pyqtSlot(str, result='QVariant')
+    def save_project_to_path(self, file_path: str):
+        """
+        保存工程文件到指定路径
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            包含 success 和 path 的字典
+        """
+        return self.api.save_project(file_path)
+
+    @pyqtSlot(result='QVariant')
+    def load_project(self):
+        """
+        从工程文件加载演示文稿（.hppt 格式）
+        
+        Returns:
+            包含 success 和 presentation 的字典
+        """
+        return self.api.load_project()
+
+    @pyqtSlot(str, result='QVariant')
+    def load_project_from_path(self, file_path: str):
+        """
+        从指定工程文件路径加载
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            包含 success 和 presentation 的字典
+        """
+        return self.api.load_project(file_path)
+
+    @pyqtSlot(result='QVariant')
+    def export_project_to_folder(self):
+        """
+        导出为工程文件夹（解压状态）
+        
+        Returns:
+            包含 success 和 path 的字典
+        """
+        return self.api.export_project_to_folder()
+
     # ==================== 动画操作 ====================
 
     @pyqtSlot(str, str, str, result='QVariant')
@@ -981,6 +1076,53 @@ class ApiWrapper(QObject):
 
 
 def parse_args():
+    """
+    解析命令行参数
+    
+    使用 argparse 模块解析命令行参数，支持多种运行模式和调试选项。
+    
+    Returns:
+        argparse.Namespace: 解析后的参数对象，包含以下属性：
+        
+        基本参数:
+            - dev (bool): 启用开发者模式
+            - -auto_test (bool): 自动测试模式
+            - new_slides (int): 自动创建的幻灯片数量
+            - layout (str): 新建幻灯片的版式
+            - export (str): 导出路径
+            - open_file (str): 打开的项目文件路径
+            - headless (bool): 无头模式
+            - demo (bool): 演示模式
+            - preview (bool): 自动打开放映预览
+            - preview_slide (int): 放映起始幻灯片索引
+        
+        调试参数:
+            - debug (bool): 启用 Debug 模式
+            - debug_level (str): Debug 日志级别
+            - auto_inspect (bool): 自动检查状态
+            - debug_stats (bool): 显示 Debug 统计
+            - front_debug (bool): 前端调试模式
+        
+        测试参数:
+            - api_test (bool): 运行 API 测试
+            - benchmark (int): 性能基准测试迭代次数
+            - export_debug (str): 调试信息导出路径
+        
+        启动场景参数:
+            - skip_welcome (bool): 跳过欢迎页
+            - quick_start (bool): 快速启动模式
+        
+        示例生成参数:
+            - create_examples (bool): 创建所有示例
+            - create_intro (bool): 创建软件介绍 PPT
+            - create_demo (bool): 创建功能演示 PPT
+            - create_minimal (bool): 创建最小测试 PPT
+    
+    Example:
+        >>> args = parse_args()
+        >>> if args.dev:
+        ...     print("开发者模式已启用")
+    """
     parser = argparse.ArgumentParser(description='HTML PPT 编辑器 - 演示文稿制作工具')
     parser.add_argument('--dev', action='store_true', help='启用开发者模式')
     parser.add_argument('--auto-test', action='store_true', help='自动测试模式：自动创建所有版式的幻灯片')
@@ -1025,9 +1167,41 @@ def parse_args():
 
 
 class DevModeController:
-    """开发者模式控制器 - 增强版（含最小单元格 Debug）"""
+    """
+    开发者模式控制器 - 增强版（含最小单元格 Debug）
+    
+    提供开发者模式下的各种调试、测试和自动化功能。
+    通过命令行参数触发不同的开发者命令。
+    
+    主要功能:
+        - Debug 模式: 启用详细日志记录和状态检查
+        - 自动测试: 创建所有版式的幻灯片进行测试
+        - 性能基准: 测试 API 调用性能
+        - 示例生成: 创建示例演示文稿
+        - 预览模式: 自动启动放映预览
+    
+    Attributes:
+        api (ApiWrapper): API 包装器实例
+        main_window (QMainWindow): 主窗口实例
+        test_results (list): 测试结果列表
+        debug_enabled (bool): Debug 模式是否启用
+        auto_inspect (bool): 是否自动检查状态
+        tracers (dict): 模块追踪器字典
+    
+    Example:
+        >>> dev_controller = DevModeController(api_wrapper, main_window)
+        >>> dev_controller.enable_debug(level='DEBUG', auto_inspect=True)
+        >>> dev_controller.run_auto_test()
+    """
     
     def __init__(self, api_wrapper, main_window):
+        """
+        初始化开发者模式控制器
+        
+        Args:
+            api_wrapper: API 包装器实例，用于调用后端 API
+            main_window: 主窗口实例，用于访问 UI 组件
+        """
         self.api = api_wrapper
         self.main_window = main_window
         self.test_results = []
@@ -1036,7 +1210,19 @@ class DevModeController:
         self.tracers = {}
         
     def enable_debug(self, level='INFO', auto_inspect=False):
-        """启用 Debug 模式"""
+        """
+        启用 Debug 模式
+        
+        启用详细的日志记录功能，可选择自动检查状态。
+        
+        Args:
+            level (str): 日志级别，可选值: DEBUG, INFO, WARN, ERROR
+            auto_inspect (bool): 是否启用自动状态检查，默认 False
+        
+        Note:
+            启用后，DebugLogger 会记录所有日志到历史记录中，
+            可以通过 show_debug_stats() 查看统计信息。
+        """
         self.debug_enabled = True
         self.auto_inspect = auto_inspect
         DebugLogger.enable(level)
@@ -1056,13 +1242,33 @@ class DevModeController:
         DebugLogger.disable()
         
     def get_tracer(self, module_name):
-        """获取或创建追踪器"""
+        """
+        获取或创建追踪器
+        
+        追踪器用于记录 API 调用的统计信息，包括调用次数、
+        成功率等。
+        
+        Args:
+            module_name (str): 模块名称，用于标识追踪器
+        
+        Returns:
+            DebugTracer: 追踪器实例
+        """
         if module_name not in self.tracers:
             self.tracers[module_name] = DebugTracer(module_name)
         return self.tracers[module_name]
         
     def inspect_state(self):
-        """检查当前状态 - 主动性查看"""
+        """
+        检查当前状态 - 主动性查看
+        
+        打印当前演示文稿的状态信息，包括：
+            - 元数据（标题、作者）
+            - 幻灯片数量和详情
+            - API 调用统计
+        
+        如果启用了 auto_inspect，会定时自动执行状态检查。
+        """
         if not self.debug_enabled:
             return
             
@@ -1501,6 +1707,48 @@ class DevModeController:
 
 
 def main():
+    """
+    应用程序主入口函数
+    
+    初始化并启动 HTML PPT 编辑器应用程序。
+    根据命令行参数执行不同的启动模式。
+    
+    启动流程:
+        1. 解析命令行参数
+        2. 创建 QApplication 实例
+        3. 如果是无头模式，执行导出后退出
+        4. 创建主窗口和 WebView 组件
+        5. 配置 WebEngine 设置（本地存储、JavaScript 等）
+        6. 设置 QWebChannel 通信
+        7. 加载前端 HTML 页面
+        8. 根据参数执行开发者命令
+        9. 启动 Qt 事件循环
+    
+    支持的启动模式:
+        - 正常模式: 显示欢迎页，用户手动操作
+        - 开发者模式 (--dev): 启用调试功能
+        - 快速启动 (--quick-start): 跳过欢迎页并创建新演示文稿
+        - 无头模式 (--headless): 不显示窗口，执行命令后退出
+        - 预览模式 (--preview): 自动打开放映预览
+    
+    Returns:
+        int: 应用程序退出代码
+            - 0: 正常退出
+            - 非 0: 异常退出
+    
+    Example:
+        # 正常启动
+        $ python main.py
+        
+        # 开发者模式启动
+        $ python main.py --dev
+        
+        # 快速启动并创建演示文稿
+        $ python main.py --quick-start
+        
+        # 无头模式导出
+        $ python main.py --headless --demo --export output.pptjson
+    """
     args = parse_args()
     
     app = QApplication(sys.argv)

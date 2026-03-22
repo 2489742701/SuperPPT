@@ -550,4 +550,48 @@ const PathAnimation = {
      * 获取路径上的位置
      * 
      * @param {Object[]} path - 路径点数组
-     * @param {number} progress - 进度 (0-1
+     * @param {number} progress - 进度 (0-1)
+     * @returns {{x: number, y: number}}
+     */
+    getPositionOnPath(path, progress) {
+        if (path.length < 2) return path[0] || { x: 0, y: 0 };
+        
+        let totalLength = 0;
+        const segments = [];
+        
+        for (let i = 0; i < path.length - 1; i++) {
+            const dx = path[i + 1].x - path[i].x;
+            const dy = path[i + 1].y - path[i].y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            segments.push({ start: path[i], end: path[i + 1], length });
+            totalLength += length;
+        }
+        
+        const targetLength = progress * totalLength;
+        let currentLength = 0;
+        
+        for (const segment of segments) {
+            if (currentLength + segment.length >= targetLength) {
+                const segmentProgress = (targetLength - currentLength) / segment.length;
+                return {
+                    x: segment.start.x + (segment.end.x - segment.start.x) * segmentProgress,
+                    y: segment.start.y + (segment.end.y - segment.start.y) * segmentProgress
+                };
+            }
+            currentLength += segment.length;
+        }
+        
+        return path[path.length - 1];
+    },
+
+    /**
+     * 销毁模块
+     */
+    destroy() {
+        this.exitDrawingMode();
+        this.store = null;
+        this.canvas = null;
+    }
+};
+
+window.PathAnimation = PathAnimation;

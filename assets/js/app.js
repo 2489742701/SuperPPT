@@ -114,6 +114,11 @@ class PPTEditor {
         ContextMenu.bindEvents(this.store);
         LinkModal.init();
         
+        // 初始化路径动画模块
+        if (window.PathAnimation) {
+            PathAnimation.init(this.store, this.canvas);
+        }
+        
         // 初始化主题管理器
         if (window.ThemeManager) {
             ThemeManager.init(this.store);

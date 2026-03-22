@@ -709,6 +709,39 @@ class EditorStore {
         this.historyIndex = 0;
         this.notify();
     }
+    
+    newPresentation() {
+        const newPres = {
+            slides: [{
+                id: 'slide-' + Math.random().toString(36).substr(2, 9),
+                elements: [],
+                metadata: {
+                    backgroundColor: '#ffffff',
+                    width: 1200,
+                    height: 'auto',
+                    minHeight: 675,
+                    transition: 'fade',
+                    layout: 'blank'
+                }
+            }],
+            metadata: {
+                title: '未命名演示文稿',
+                author: '',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                version: '1.0'
+            },
+            currentSlideIndex: 0,
+            slideMasters: {}
+        };
+        
+        this.presentation = newPres;
+        this.activeSlideId = newPres.slides[0].id;
+        this.activeElementId = null;
+        this.history = [JSON.parse(JSON.stringify(newPres))];
+        this.historyIndex = 0;
+        this.notify();
+    }
 }
 
 window.EditorStore = EditorStore;

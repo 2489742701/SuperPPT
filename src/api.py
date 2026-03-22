@@ -4,6 +4,10 @@ import json
 import uuid
 import copy
 import datetime
+import zipfile
+import tempfile
+import base64
+import shutil
 from typing import Dict, List, Optional, Any
 from jinja2 import Environment, FileSystemLoader, Template
 
@@ -1067,3 +1071,300 @@ class API:
         """检查是否在打包环境中运行"""
         is_pkg = hasattr(sys, '_MEIPASS')
         return {"success": True, "packaged": is_pkg}
+
+    def save_project(self, file_path: str = None) -> Dict:
+        """
+        保存为工程文件（.hppt 格式，实际是 ZIP 压缩包）
+        
+        文件结构:
+        - presentation.json    # 演示文稿数据
+        - media/               # 媒体资源文件夹
+          - image_001.png
+          - video_001.mp4
+          - audio_001.mp3
+        - thumbnails/          # 缩略图
+          - slide_001.png
+        
+        Args:
+            file_path: 保存路径，如果不指定则弹出保存对话框
+            
+        Returns:
+            包含 success 和 path 的字典
+        """
+        try:
+            if file_path is None and self._file_dialog_parent:
+                from PyQt6.QtWidgets import QFileDialog
+                default_name = self.presentation.metadata.get("title", "未命名演示文稿") + ".hppt"
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self._file_dialog_parent,
+                    "保存工程文件",
+                    default_name,
+                    "HTML PPT 工程文件 (*.hppt);;HPPT 文件 (*.hppt)"
+                )
+            
+            if not file_path:
+                return {"success": False, "message": "未选择文件"}
+            
+            if not file_path.endswith('.hppt'):
+                file_path += '.hppt'
+            
+            media_map = {}
+            media_dir = "media"
+            
+            with zipfile.ZipFile(file_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                presentation_data = self.presentation.to_dict()
+                
+                for slide_idx, slide in enumerate(self.presentation.slides):
+                    for elem_idx, element in enumerate(slide.elements):
+                        if element.type in ('image', 'media') and element.content:
+                            content = element.content
+                            
+                            if content.startswith('data:'):
+                                try:
+                                    header, data = content.split(',', 1)
+                                    mime_type = header.split(':')[1].split(';')[0]
+                                    
+                                    ext = self._get_extension_from_mime(mime_type)
+                                    
+                                    media_name = f"media_{slide_idx:03d}_{elem_idx:03d}{ext}"
+                                    media_path = f"{media_dir}/{media_name}"
+                                    
+                                    file_data = base64.b64decode(data)
+                                    zf.writestr(media_path, file_data)
+                                    
+                                    media_map[element.id] = media_path
+                                    element.content = f"embedded://{media_path}"
+                                    
+                                except Exception as e:
+                                    print(f"[API] 处理嵌入资源失败: {e}")
+                            
+                            elif content.startswith('file://') or (len(content) > 2 and content[1] == ':'):
+                                try:
+                                    local_path = content.replace('file://', '')
+                                    if os.path.exists(local_path):
+                                        ext = os.path.splitext(local_path)[1] or '.bin'
+                                        media_name = f"media_{slide_idx:03d}_{elem_idx:03d}{ext}"
+                                        media_path = f"{media_dir}/{media_name}"
+                                        
+                                        with open(local_path, 'rb') as f:
+                                            file_data = f.read()
+                                        
+                                        zf.writestr(media_path, file_data)
+                                        media_map[element.id] = media_path
+                                        element.content = f"embedded://{media_path}"
+                                        
+                                except Exception as e:
+                                    print(f"[API] 处理本地文件失败: {e}")
+                
+                presentation_json = json.dumps(presentation_data, ensure_ascii=False, indent=2)
+                zf.writestr("presentation.json", presentation_json)
+                
+                manifest = {
+                    "version": "1.0",
+                    "created": datetime.datetime.now().isoformat(),
+                    "title": self.presentation.metadata.get("title", "未命名演示文稿"),
+                    "slideCount": len(self.presentation.slides),
+                    "mediaMap": media_map
+                }
+                zf.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+            
+            for slide_idx, slide in enumerate(self.presentation.slides):
+                for element in slide.elements:
+                    if element.id in media_map:
+                        element.content = media_map[element.id]
+            
+            return {"success": True, "path": file_path}
+            
+        except Exception as e:
+            print(f"[API] 保存工程文件失败: {e}")
+            return {"success": False, "message": str(e)}
+
+    def load_project(self, file_path: str = None) -> Dict:
+        """
+        从工程文件加载演示文稿
+        
+        Args:
+            file_path: 文件路径，如果不指定则弹出打开对话框
+            
+        Returns:
+            包含 success 和 presentation 的字典
+        """
+        try:
+            if file_path is None and self._file_dialog_parent:
+                from PyQt6.QtWidgets import QFileDialog
+                file_path, _ = QFileDialog.getOpenFileName(
+                    self._file_dialog_parent,
+                    "打开工程文件",
+                    "",
+                    "HTML PPT 工程文件 (*.hppt);;HPPT 文件 (*.hppt);;所有文件 (*.*)"
+                )
+            
+            if not file_path:
+                return {"success": False, "message": "未选择文件"}
+            
+            if not os.path.exists(file_path):
+                return {"success": False, "message": "文件不存在"}
+            
+            self._save_undo_state()
+            
+            temp_dir = tempfile.mkdtemp(prefix="ppt_load_")
+            
+            try:
+                with zipfile.ZipFile(file_path, 'r') as zf:
+                    zf.extractall(temp_dir)
+                
+                presentation_path = os.path.join(temp_dir, "presentation.json")
+                if not os.path.exists(presentation_path):
+                    return {"success": False, "message": "无效的工程文件：缺少 presentation.json"}
+                
+                with open(presentation_path, 'r', encoding='utf-8') as f:
+                    presentation_data = json.load(f)
+                
+                for slide in presentation_data.get("slides", []):
+                    for element in slide.get("elements", []):
+                        content = element.get("content", "")
+                        if content.startswith("embedded://"):
+                            media_path = content.replace("embedded://", "")
+                            full_path = os.path.join(temp_dir, media_path)
+                            
+                            if os.path.exists(full_path):
+                                ext = os.path.splitext(full_path)[1].lower()
+                                mime_type = self._get_mime_from_extension(ext)
+                                
+                                with open(full_path, 'rb') as f:
+                                    file_data = f.read()
+                                
+                                base64_data = base64.b64encode(file_data).decode('utf-8')
+                                element["content"] = f"data:{mime_type};base64,{base64_data}"
+                
+                self.presentation = Presentation.from_dict(presentation_data)
+                
+                return {
+                    "success": True, 
+                    "presentation": self.presentation.to_dict(),
+                    "file_path": file_path
+                }
+                
+            finally:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                
+        except zipfile.BadZipFile:
+            return {"success": False, "message": "无效的 ZIP 文件"}
+        except Exception as e:
+            print(f"[API] 加载工程文件失败: {e}")
+            return {"success": False, "message": str(e)}
+
+    def _get_extension_from_mime(self, mime_type: str) -> str:
+        """从 MIME 类型获取文件扩展名"""
+        mime_map = {
+            'image/png': '.png',
+            'image/jpeg': '.jpg',
+            'image/jpg': '.jpg',
+            'image/gif': '.gif',
+            'image/webp': '.webp',
+            'image/svg+xml': '.svg',
+            'image/bmp': '.bmp',
+            'video/mp4': '.mp4',
+            'video/webm': '.webm',
+            'video/ogg': '.ogv',
+            'audio/mpeg': '.mp3',
+            'audio/wav': '.wav',
+            'audio/ogg': '.oga',
+            'audio/mp3': '.mp3',
+        }
+        return mime_map.get(mime_type, '.bin')
+
+    def _get_mime_from_extension(self, ext: str) -> str:
+        """从扩展名获取 MIME 类型"""
+        ext_map = {
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.webp': 'image/webp',
+            '.svg': 'image/svg+xml',
+            '.bmp': 'image/bmp',
+            '.mp4': 'video/mp4',
+            '.webm': 'video/webm',
+            '.ogv': 'video/ogg',
+            '.mp3': 'audio/mpeg',
+            '.wav': 'audio/wav',
+            '.oga': 'audio/ogg',
+        }
+        return ext_map.get(ext, 'application/octet-stream')
+
+    def export_project_to_folder(self, output_dir: str = None) -> Dict:
+        """
+        导出为工程文件夹（解压状态）
+        
+        Args:
+            output_dir: 输出目录
+            
+        Returns:
+            包含 success 和 path 的字典
+        """
+        try:
+            if output_dir is None and self._file_dialog_parent:
+                from PyQt6.QtWidgets import QFileDialog
+                output_dir = QFileDialog.getExistingDirectory(
+                    self._file_dialog_parent,
+                    "选择导出目录"
+                )
+            
+            if not output_dir:
+                return {"success": False, "message": "未选择目录"}
+            
+            project_name = self.presentation.metadata.get("title", "未命名演示文稿")
+            project_dir = os.path.join(output_dir, project_name)
+            
+            if os.path.exists(project_dir):
+                shutil.rmtree(project_dir)
+            
+            os.makedirs(project_dir)
+            media_dir = os.path.join(project_dir, "media")
+            os.makedirs(media_dir, exist_ok=True)
+            
+            presentation_data = self.presentation.to_dict()
+            
+            for slide_idx, slide in enumerate(self.presentation.slides):
+                for elem_idx, element in enumerate(slide.elements):
+                    if element.type in ('image', 'media') and element.content:
+                        content = element.content
+                        
+                        if content.startswith('data:'):
+                            try:
+                                header, data = content.split(',', 1)
+                                mime_type = header.split(':')[1].split(';')[0]
+                                ext = self._get_extension_from_mime(mime_type)
+                                
+                                media_name = f"media_{slide_idx:03d}_{elem_idx:03d}{ext}"
+                                media_path = os.path.join(media_dir, media_name)
+                                
+                                file_data = base64.b64decode(data)
+                                with open(media_path, 'wb') as f:
+                                    f.write(file_data)
+                                
+                                element.content = f"media/{media_name}"
+                                
+                            except Exception as e:
+                                print(f"[API] 导出资源失败: {e}")
+            
+            presentation_path = os.path.join(project_dir, "presentation.json")
+            with open(presentation_path, 'w', encoding='utf-8') as f:
+                json.dump(presentation_data, f, ensure_ascii=False, indent=2)
+            
+            manifest = {
+                "version": "1.0",
+                "created": datetime.datetime.now().isoformat(),
+                "title": self.presentation.metadata.get("title", "未命名演示文稿"),
+                "slideCount": len(self.presentation.slides)
+            }
+            manifest_path = os.path.join(project_dir, "manifest.json")
+            with open(manifest_path, 'w', encoding='utf-8') as f:
+                json.dump(manifest, f, ensure_ascii=False, indent=2)
+            
+            return {"success": True, "path": project_dir}
+            
+        except Exception as e:
+            print(f"[API] 导出工程文件夹失败: {e}")
+            return {"success": False, "message": str(e)}

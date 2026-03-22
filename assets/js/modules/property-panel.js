@@ -312,6 +312,39 @@ const PropertyPanel = {
                 ` : ''}
             </div>
         `;
+        
+        if (element.type === 'image' || element.type === 'shape' || element.type === 'icon') {
+            const hasPath = element.pathAnimation && element.pathAnimation.path && element.pathAnimation.path.length >= 2;
+            html += `
+                <div class="property-section">
+                    <div class="property-section-title">路径动画</div>
+                    <div class="property-row" style="font-size:11px;color:#71717a;margin-bottom:8px;">
+                        让元素沿自定义路径移动。点击"绘制路径"后在画布上点击添加路径点。
+                    </div>
+                    <button class="property-btn full-width" id="btn-draw-path" style="width:100%;justify-content:center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                        </svg>
+                        ${hasPath ? '编辑路径' : '绘制路径'}
+                    </button>
+                    ${hasPath ? `
+                    <div class="property-row" style="margin-top:8px;">
+                        <span class="property-label">动画时长</span>
+                        <input type="number" class="property-input" data-path="duration" step="0.5" min="0.5" value="${element.pathAnimation?.duration || 3}" style="width:60px">
+                        <span style="font-size:11px;color:#71717a;margin-left:4px;">秒</span>
+                    </div>
+                    <button class="property-btn full-width danger" id="btn-clear-path" style="width:100%;justify-content:center;margin-top:8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        清除路径
+                    </button>
+                    ` : ''}
+                </div>
+            `;
+        }
 
         html += `
             <div class="property-section">
@@ -345,6 +378,37 @@ const PropertyPanel = {
             radio.addEventListener('change', (e) => {
                 const newTextMode = e.target.value;
                 store.updateElement(state.activeSlideId, state.activeElementId, { textMode: newTextMode });
+            });
+        });
+        
+        document.getElementById('btn-draw-path')?.addEventListener('click', () => {
+            if (window.PathAnimation) {
+                PathAnimation.toggleDrawingMode();
+            }
+        });
+        
+        document.getElementById('btn-clear-path')?.addEventListener('click', () => {
+            if (window.PathAnimation) {
+                PathAnimation.clearElementPath(state.activeElementId);
+            }
+        });
+        
+        document.querySelectorAll('[data-path]').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const prop = e.target.dataset.path;
+                const value = parseFloat(e.target.value);
+                
+                const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
+                const element = slide?.elements.find(el => el.id === state.activeElementId);
+                
+                if (element && element.pathAnimation) {
+                    store.updateElement(state.activeSlideId, state.activeElementId, {
+                        pathAnimation: {
+                            ...element.pathAnimation,
+                            [prop]: value
+                        }
+                    });
+                }
             });
         });
         

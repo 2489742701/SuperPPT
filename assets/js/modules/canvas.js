@@ -1282,10 +1282,16 @@ const CanvasManager = {
         
         if (activeObject && activeObject.type === 'activeSelection') {
             const selectedIds = activeObject.getObjects()
-                .filter(o => o.elementId)
+                .filter(o => o.elementId && !o.isPathGuide && !o.isControlPoint)
                 .map(o => o.elementId);
+            
+            if (selectedIds.length === 0) {
+                this.canvas.discardActiveObject();
+                this.canvas.renderAll();
+                return;
+            }
+            
             store.setMultiSelection(selectedIds);
-            // 【修复】用户通过 Ctrl+点击创建多选组时记录中心点
             this._lastGroupCenter = activeObject.getCenterPoint();
             this.debug('onSelectionChanged 记录多选组中心点:', this._lastGroupCenter);
             return;
@@ -1293,6 +1299,11 @@ const CanvasManager = {
         
         if (e.selected && e.selected.length > 0) {
             const selectedObj = e.selected[0];
+            if (selectedObj.isPathGuide || selectedObj.isControlPoint) {
+                this.canvas.discardActiveObject();
+                this.canvas.renderAll();
+                return;
+            }
             if (selectedObj.elementId) {
                 const state = store.getState();
                 if (state.activeElementId !== selectedObj.elementId) {
