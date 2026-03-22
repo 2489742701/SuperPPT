@@ -289,8 +289,8 @@ class API:
             import io
             
             if not output_path:
-                from PyQt6.QtWidgets import QFileDialog
-                from PyQt6.QtCore import QSettings
+                from PySide6.QtWidgets import QFileDialog
+                from PySide6.QtCore import QSettings
                 
                 settings = QSettings("PPTEditor", "Settings")
                 last_dir = settings.value("last_export_dir", "")
@@ -394,8 +394,8 @@ class API:
         """
         try:
             if not output_dir:
-                from PyQt6.QtWidgets import QFileDialog
-                from PyQt6.QtCore import QSettings
+                from PySide6.QtWidgets import QFileDialog
+                from PySide6.QtCore import QSettings
                 
                 settings = QSettings("PPTEditor", "Settings")
                 last_dir = settings.value("last_export_dir", "")
@@ -524,10 +524,10 @@ class API:
             包含 success 的字典
         """
         try:
-            from PyQt6.QtWidgets import QFileDialog
-            from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
-            from PyQt6.QtGui import QTextDocument
-            from PyQt6.QtCore import QSettings
+            from PySide6.QtWidgets import QFileDialog
+            from PySide6.QtPrintSupport import QPrinter, QPrintDialog
+            from PySide6.QtGui import QTextDocument
+            from PySide6.QtCore import QSettings
             
             printer = QPrinter(QPrinter.PrinterMode.HighResolution)
             
@@ -678,7 +678,7 @@ class API:
     def save_to_file(self, file_path: str = None) -> Dict:
         try:
             if file_path is None and self._file_dialog_parent:
-                from PyQt6.QtWidgets import QFileDialog
+                from PySide6.QtWidgets import QFileDialog
                 default_name = self.presentation.metadata.get("title", "未命名演示文稿") + ".pptjson"
                 file_path, _ = QFileDialog.getSaveFileName(
                     self._file_dialog_parent,
@@ -698,7 +698,7 @@ class API:
     def load_from_file(self, file_path: str = None) -> Dict:
         try:
             if file_path is None and self._file_dialog_parent:
-                from PyQt6.QtWidgets import QFileDialog
+                from PySide6.QtWidgets import QFileDialog
                 file_path, _ = QFileDialog.getOpenFileName(
                     self._file_dialog_parent,
                     "打开演示文稿",
@@ -1093,7 +1093,7 @@ class API:
         """
         try:
             if file_path is None and self._file_dialog_parent:
-                from PyQt6.QtWidgets import QFileDialog
+                from PySide6.QtWidgets import QFileDialog
                 default_name = self.presentation.metadata.get("title", "未命名演示文稿") + ".hppt"
                 file_path, _ = QFileDialog.getSaveFileName(
                     self._file_dialog_parent,
@@ -1191,7 +1191,7 @@ class API:
         """
         try:
             if file_path is None and self._file_dialog_parent:
-                from PyQt6.QtWidgets import QFileDialog
+                from PySide6.QtWidgets import QFileDialog
                 file_path, _ = QFileDialog.getOpenFileName(
                     self._file_dialog_parent,
                     "打开工程文件",
@@ -1305,7 +1305,7 @@ class API:
         """
         try:
             if output_dir is None and self._file_dialog_parent:
-                from PyQt6.QtWidgets import QFileDialog
+                from PySide6.QtWidgets import QFileDialog
                 output_dir = QFileDialog.getExistingDirectory(
                     self._file_dialog_parent,
                     "选择导出目录"

@@ -37,7 +37,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineSettings
 from PySide6.QtWebChannel import QWebChannel
-from PySide6.QtGui import QKeyEvent, QShortcut, QKeySequence
+from PySide6.QtGui import QShortcut, QKeySequence
 
 
 class PresentationWindow(QMainWindow):
