@@ -154,22 +154,32 @@ class PPTEditor {
      * 否则隐藏欢迎页面，显示编辑界面。
      */
     checkShowWelcome() {
-        const shouldShowWelcome = !this.store.presentation || 
-                                  !this.store.presentation.slides || 
-                                  this.store.presentation.slides.length === 0 ||
-                                  !this.store.presentation.metadata?.filePath;
+        // 检查 URL 参数是否跳过欢迎页
+        const urlParams = new URLSearchParams(window.location.search);
+        const skipWelcome = urlParams.get('skip-welcome');
+        const quickStart = urlParams.get('quick-start');
         
-        if (shouldShowWelcome) {
-            // 显示欢迎页面
+        if (skipWelcome === 'true' || quickStart === 'true') {
+            // 跳过欢迎页
+            if (WelcomePage && typeof WelcomePage.hide === 'function') {
+                WelcomePage.hide();
+            }
+            return;
+        }
+        
+        // 检查是否有已保存的文件
+        const hasFilePath = this.store.presentation?.metadata?.filePath;
+        
+        if (!hasFilePath) {
+            // 没有文件路径，显示欢迎页面
             if (WelcomePage && typeof WelcomePage.show === 'function') {
                 WelcomePage.show();
             }
         } else {
-            // 隐藏欢迎页面，显示编辑界面
+            // 有文件路径，隐藏欢迎页面
             if (WelcomePage && typeof WelcomePage.hide === 'function') {
                 WelcomePage.hide();
             }
-            // 注意：这里不需要调用 notify()，因为 init() 最后会统一调用
         }
     }
 
