@@ -437,77 +437,77 @@ class ApiWrapper(QObject):
 
     # ==================== 幻灯片操作 ====================
     
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def add_slide(self, after_slide_id: str = None):
         return self.api.add_slide(after_slide_id)
     
-    @Slot(str, str, result=object)
+    @Slot(str, str, result='QVariant')
     def add_slide_with_layout(self, after_slide_id: str, layout: str):
         return self.api.add_slide(after_slide_id, layout)
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def remove_slide(self, slide_id: str):
         return self.api.remove_slide(slide_id)
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def duplicate_slide(self, slide_id: str):
         return self.api.duplicate_slide(slide_id)
 
-    @Slot(int, int, result=object)
+    @Slot(int, int, result='QVariant')
     def move_slide(self, from_index: int, to_index: int):
         return self.api.move_slide(from_index, to_index)
 
-    @Slot(int, result=object)
+    @Slot(int, result='QVariant')
     def set_current_slide(self, index: int):
         return self.api.set_current_slide(index)
     
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def get_layout_templates(self):
         return self.api.get_layout_templates()
     
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def set_default_layout(self, layout: str):
         return self.api.set_default_layout(layout)
     
-    @Slot(str, str, result=object)
+    @Slot(str, str, result='QVariant')
     def change_slide_layout(self, slide_id: str, layout: str):
         return self.api.change_slide_layout(slide_id, layout)
 
     # ==================== 母版操作 ====================
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def get_slide_masters(self):
         """获取所有母版"""
         return self.api.get_slide_masters()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def get_slide_master(self, master_id: str):
         """获取指定母版"""
         return self.api.get_slide_master(master_id)
 
-    @Slot(object, result=object)
+    @Slot('QVariant', result='QVariant')
     def add_slide_master(self, master):
         """添加新母版"""
         return self.api.add_slide_master(master)
 
-    @Slot(str, object, result=object)
+    @Slot(str, 'QVariant', result='QVariant')
     def update_slide_master(self, master_id: str, master):
         """更新母版"""
         return self.api.update_slide_master(master_id, master)
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def delete_slide_master(self, master_id: str):
         """删除母版"""
         return self.api.delete_slide_master(master_id)
 
-    @Slot(str, str, result=object)
+    @Slot(str, str, result='QVariant')
     def apply_master_to_slide(self, slide_id: str, master_id: str):
         """将母版应用到幻灯片"""
         return self.api.apply_master_to_slide(slide_id, master_id)
 
     # ==================== 元素操作 ====================
     
-    @Slot(str, str, result=object)
+    @Slot(str, str, result='QVariant')
     def add_element(self, slide_id: str, element_type: str):
         """
         向幻灯片添加元素
@@ -521,7 +521,7 @@ class ApiWrapper(QObject):
         """
         return self.api.add_element(slide_id, element_type)
 
-    @Slot(str, str, object, result=object)
+    @Slot(str, str, 'QVariant', result='QVariant')
     def update_element(self, slide_id: str, element_id: str, style):
         """
         更新元素样式
@@ -536,7 +536,7 @@ class ApiWrapper(QObject):
         """
         return self.api.update_element(slide_id, element_id, style)
 
-    @Slot(str, str, result=object)
+    @Slot(str, str, result='QVariant')
     def remove_element(self, slide_id: str, element_id: str):
         """
         删除元素
@@ -550,7 +550,7 @@ class ApiWrapper(QObject):
         """
         return self.api.remove_element(slide_id, element_id)
 
-    @Slot(str, str, result=object)
+    @Slot(str, str, result='QVariant')
     def duplicate_element(self, slide_id: str, element_id: str):
         """
         复制元素
@@ -566,7 +566,7 @@ class ApiWrapper(QObject):
 
     # ==================== 元数据操作 ====================
     
-    @Slot(str, object, result=object)
+    @Slot(str, 'QVariant', result='QVariant')
     def update_slide_metadata(self, slide_id: str, metadata):
         """
         更新幻灯片元数据
@@ -580,7 +580,7 @@ class ApiWrapper(QObject):
         """
         return self.api.update_slide_metadata(slide_id, metadata)
 
-    @Slot(object, result=object)
+    @Slot('QVariant', result='QVariant')
     def update_presentation_metadata(self, metadata):
         """
         更新演示文稿元数据
@@ -615,7 +615,7 @@ class ApiWrapper(QObject):
         """
         return self.api.export_single_file()
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def export_images(self):
         """
         导出为图片
@@ -625,7 +625,7 @@ class ApiWrapper(QObject):
         """
         return self.api.export_images()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def export_images_to_dir(self, output_dir: str):
         """
         导出为图片到指定目录
@@ -638,7 +638,7 @@ class ApiWrapper(QObject):
         """
         return self.api.export_images(output_dir)
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def print_presentation(self):
         """
         打印演示文稿
@@ -650,7 +650,7 @@ class ApiWrapper(QObject):
 
     # ==================== 撤销/重做操作 ====================
     
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def undo(self):
         """
         撤销上一步操作
@@ -660,7 +660,7 @@ class ApiWrapper(QObject):
         """
         return self.api.undo()
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def redo(self):
         """
         重做已撤销的操作
@@ -672,7 +672,7 @@ class ApiWrapper(QObject):
 
     # ==================== 文件操作 ====================
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def save_to_file(self):
         """
         保存演示文稿到文件（弹出对话框）
@@ -682,7 +682,7 @@ class ApiWrapper(QObject):
         """
         return self.api.save_to_file()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def save_to_file_path(self, file_path: str):
         """
         保存演示文稿到指定路径
@@ -695,7 +695,7 @@ class ApiWrapper(QObject):
         """
         return self.api.save_to_file(file_path)
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def load_from_file(self):
         """
         从文件加载演示文稿（弹出对话框）
@@ -705,7 +705,7 @@ class ApiWrapper(QObject):
         """
         return self.api.load_from_file()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def load_from_file_path(self, file_path: str):
         """
         从指定路径加载演示文稿
@@ -720,7 +720,7 @@ class ApiWrapper(QObject):
 
     # ==================== 工程文件操作 ====================
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def save_project(self):
         """
         保存为工程文件（.hppt 格式，ZIP 压缩包）
@@ -733,7 +733,7 @@ class ApiWrapper(QObject):
         """
         return self.api.save_project()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def save_project_to_path(self, file_path: str):
         """
         保存工程文件到指定路径
@@ -746,7 +746,7 @@ class ApiWrapper(QObject):
         """
         return self.api.save_project(file_path)
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def load_project(self):
         """
         从工程文件加载演示文稿（.hppt 格式）
@@ -756,7 +756,7 @@ class ApiWrapper(QObject):
         """
         return self.api.load_project()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def load_project_from_path(self, file_path: str):
         """
         从指定工程文件路径加载
@@ -769,7 +769,7 @@ class ApiWrapper(QObject):
         """
         return self.api.load_project(file_path)
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def export_project_to_folder(self):
         """
         导出为工程文件夹（解压状态）
@@ -781,7 +781,7 @@ class ApiWrapper(QObject):
 
     # ==================== 动画操作 ====================
 
-    @Slot(str, str, str, result=object)
+    @Slot(str, str, str, result='QVariant')
     def set_element_animation(self, slide_id: str, element_id: str, animation_type: str):
         """
         设置元素动画
@@ -798,7 +798,7 @@ class ApiWrapper(QObject):
 
     # ==================== 元素层级操作 ====================
 
-    @Slot(str, str, str, result=object)
+    @Slot(str, str, str, result='QVariant')
     def reorder_element(self, slide_id: str, element_id: str, direction: str):
         """
         调整元素层级
@@ -815,7 +815,7 @@ class ApiWrapper(QObject):
 
     # ==================== 对齐操作 ====================
 
-    @Slot(str, object, str, result=object)
+    @Slot(str, 'QVariant', str, result='QVariant')
     def align_elements(self, slide_id: str, element_ids, align_type: str):
         """
         对齐多个元素
@@ -832,7 +832,7 @@ class ApiWrapper(QObject):
 
     # ==================== 剪贴板操作 ====================
 
-    @Slot(str, object, result=object)
+    @Slot(str, 'QVariant', result='QVariant')
     def copy_elements(self, slide_id: str, element_ids):
         """
         复制元素到剪贴板
@@ -846,7 +846,7 @@ class ApiWrapper(QObject):
         """
         return self.api.copy_elements(slide_id, list(element_ids))
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def paste_elements(self, target_slide_id: str):
         """
         粘贴剪贴板中的元素
@@ -859,7 +859,7 @@ class ApiWrapper(QObject):
         """
         return self.api.paste_elements(target_slide_id)
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def get_clipboard(self):
         """
         获取剪贴板内容
@@ -869,7 +869,7 @@ class ApiWrapper(QObject):
         """
         return self.api.get_clipboard()
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def clear_clipboard(self):
         """
         清空剪贴板
@@ -881,7 +881,7 @@ class ApiWrapper(QObject):
 
     # ==================== 用户设置 ====================
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def get_user_name(self):
         """
         获取用户名
@@ -891,7 +891,7 @@ class ApiWrapper(QObject):
         """
         return self.api.get_user_name()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def set_user_name(self, name: str):
         """
         设置用户名
@@ -906,7 +906,7 @@ class ApiWrapper(QObject):
 
     # ==================== 最近文件 ====================
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def get_recent_files(self):
         """
         获取最近文件列表
@@ -916,7 +916,7 @@ class ApiWrapper(QObject):
         """
         return self.api.get_recent_files()
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def add_recent_file(self, path: str):
         """
         添加到最近文件列表
@@ -929,7 +929,7 @@ class ApiWrapper(QObject):
         """
         return self.api.add_recent_file(path)
 
-    @Slot(int, result=object)
+    @Slot(int, result='QVariant')
     def remove_recent_file(self, index: int):
         """
         从最近文件列表移除
@@ -942,7 +942,7 @@ class ApiWrapper(QObject):
         """
         return self.api.remove_recent_file(index)
 
-    @Slot(str, result=object)
+    @Slot(str, result='QVariant')
     def check_file_exists(self, path: str):
         """
         检查文件是否存在
@@ -957,7 +957,7 @@ class ApiWrapper(QObject):
 
     # ==================== 日志操作 ====================
 
-    @Slot(str, str, str, str, result=object)
+    @Slot(str, str, str, str, result='QVariant')
     def write_log(self, level: str, module: str, message: str, data: str = ""):
         """
         写入日志到文件
@@ -973,19 +973,19 @@ class ApiWrapper(QObject):
         """
         return self.api.write_log(level, module, message, data)
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def clear_log(self):
         """清空日志文件"""
         return self.api.clear_log()
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def is_packaged(self):
         """检查是否在打包环境中运行"""
         return self.api.is_packaged()
 
     # ==================== 放映操作 ====================
 
-    @Slot(int, result=object)
+    @Slot(int, result='QVariant')
     def start_presentation(self, start_slide: int = 0):
         """
         启动全屏放映窗口
@@ -1040,7 +1040,7 @@ class ApiWrapper(QObject):
             print(f"[PyQt6] 启动放映失败: {e}")
             return {"success": False, "message": str(e)}
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def close_window(self):
         """
         关闭主窗口
@@ -1059,7 +1059,7 @@ class ApiWrapper(QObject):
             print(f"[PyQt6] 关闭窗口失败: {e}")
             return {"success": False, "message": str(e)}
 
-    @Slot(result=object)
+    @Slot(result='QVariant')
     def export_pdf(self):
         """
         导出演示文稿为 PDF 文件
