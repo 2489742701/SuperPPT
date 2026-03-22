@@ -3083,3 +3083,258 @@ body {
 [data-theme="dark"] .composite-toolbar {
     background: var(--zinc-800);
 }
+
+/* ==================== 工具栏暗色模式 ==================== */
+
+[data-theme="dark"] .toolbar-brand {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .toolbar-divider {
+    background: var(--zinc-600);
+}
+
+[data-theme="dark"] .toolbar-btn {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .toolbar-btn:hover:not(:disabled) {
+    background: var(--zinc-700);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .toolbar-btn:disabled {
+    color: var(--zinc-500);
+}
+
+/* ==================== 下拉菜单暗色模式 ==================== */
+
+[data-theme="dark"] .dropdown-menu {
+    background: var(--bg-secondary);
+    border-color: var(--zinc-600);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background: var(--zinc-700);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-divider {
+    background: var(--zinc-600);
+}
+
+[data-theme="dark"] .dropdown-header {
+    color: var(--zinc-400);
+}
+
+[data-theme="dark"] .status-dot {
+    background: var(--zinc-500);
+}
+
+/* ==================== 侧边栏暗色模式 ==================== */
+
+[data-theme="dark"] .sidebar-right {
+    background: var(--bg-primary);
+    border-left-color: var(--border-color);
+}
+
+/* ==================== 幻灯片面板暗色模式 ==================== */
+
+[data-theme="dark"] .slides-panel-header {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .slides-panel-header h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .slide-item {
+    border-color: var(--zinc-600);
+}
+
+[data-theme="dark"] .slide-item:hover {
+    border-color: var(--zinc-500);
+}
+
+[data-theme="dark"] .slide-item.active {
+    border-color: var(--blue-500);
+    background: var(--zinc-700);
+}
+
+[data-theme="dark"] .slide-number {
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .slide-item.active .slide-number {
+    color: var(--blue-400);
+}
+
+[data-theme="dark"] .slide-preview {
+    background: var(--bg-tertiary);
+}
+
+/* ==================== 属性面板暗色模式 ==================== */
+
+[data-theme="dark"] .property-panel {
+    background: var(--bg-primary);
+}
+
+[data-theme="dark"] .property-panel-header {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .property-panel-header h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .property-section-title {
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .property-label {
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .property-input,
+[data-theme="dark"] .property-select {
+    background: var(--bg-tertiary);
+    border-color: var(--zinc-600);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .property-input:focus,
+[data-theme="dark"] .property-select:focus {
+    border-color: var(--blue-500);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .property-input:disabled {
+    background: var(--zinc-700);
+    color: var(--zinc-500);
+}
+
+/* ==================== 右键菜单暗色模式 ==================== */
+
+[data-theme="dark"] .context-menu {
+    background: var(--bg-secondary);
+    border-color: var(--zinc-600);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .context-item {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .context-item:hover {
+    background: var(--zinc-700);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .context-divider {
+    background: var(--zinc-600);
+}
+
+/* ==================== 画布暗色模式 ==================== */
+
+[data-theme="dark"] .canvas-wrapper {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .canvas-container {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ==================== 元素选中框暗色模式 ==================== */
+
+[data-theme="dark"] .element-selected {
+    outline-color: var(--blue-400);
+}
+
+[data-theme="dark"] .resize-handle {
+    background: var(--blue-400);
+    border-color: var(--bg-primary);
+}
+
+/* ==================== 底部面板暗色模式 ==================== */
+
+[data-theme="dark"] .bottom-panel {
+    background: var(--bg-primary);
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .bottom-panel-header {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .bottom-panel-header h3 {
+    color: var(--text-primary);
+}
+
+/* ==================== 滚动条暗色模式 ==================== */
+
+[data-theme="dark"] ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--zinc-600);
+    border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--zinc-500);
+}
+
+/* ==================== 链接弹窗暗色模式 ==================== */
+
+[data-theme="dark"] .link-type-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--zinc-600);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .link-type-btn:hover {
+    background: var(--zinc-700);
+    border-color: var(--zinc-500);
+}
+
+[data-theme="dark"] .link-type-btn.active {
+    background: var(--blue-600);
+    border-color: var(--blue-500);
+    color: white;
+}
+
+/* ==================== 快捷键弹窗暗色模式 ==================== */
+
+[data-theme="dark"] .shortcuts-modal .modal-content {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .shortcut-group-title {
+    color: var(--text-secondary);
+    border-bottom-color: var(--zinc-600);
+}
+
+[data-theme="dark"] .shortcut-item {
+    border-bottom-color: var(--zinc-700);
+}
+
+[data-theme="dark"] .shortcut-key {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .shortcut-desc {
+    color: var(--text-secondary);
+}
