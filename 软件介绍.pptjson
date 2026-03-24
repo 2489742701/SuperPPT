@@ -1,0 +1,982 @@
+{
+  "metadata": {
+    "title": "HTML PPT 编辑器 - 功能介绍",
+    "author": "开发团队",
+    "createdAt": "2026-03-23T03:22:53.619915",
+    "modifiedAt": "2026-03-23T03:22:53.620080",
+    "description": "一款现代化的演示文稿制作工具"
+  },
+  "settings": {
+    "advanceMode": "click",
+    "smartGuidesEnabled": true
+  },
+  "slides": [
+    {
+      "id": "slide-d97403a2",
+      "elements": [
+        {
+          "id": "elem-7cc99aff",
+          "type": "textbox",
+          "content": "HTML PPT 编辑器",
+          "style": {
+            "x": 100,
+            "y": 200,
+            "width": 1000,
+            "height": 120,
+            "fontSize": 64,
+            "fontWeight": "bold",
+            "color": "#1a1a2e",
+            "textAlign": "center",
+            "fontFamily": "Arial"
+          },
+          "animation": {
+            "type": "fadeIn",
+            "duration": 0.8,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-711e533b",
+          "type": "textbox",
+          "content": "一款现代化的演示文稿制作工具",
+          "style": {
+            "x": 200,
+            "y": 350,
+            "width": 800,
+            "height": 60,
+            "fontSize": 28,
+            "color": "#4a4a6a",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "fadeIn",
+            "duration": 0.8,
+            "delay": 0.3
+          }
+        },
+        {
+          "id": "elem-20a7d075",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 450,
+            "y": 450,
+            "width": 300,
+            "height": 6,
+            "fill": "#3b82f6"
+          },
+          "animation": {
+            "type": "scaleIn",
+            "duration": 0.5,
+            "delay": 0.6
+          }
+        },
+        {
+          "id": "elem-87816a2e",
+          "type": "textbox",
+          "content": "版本 1.0 | 2024",
+          "style": {
+            "x": 400,
+            "y": 500,
+            "width": 400,
+            "height": 40,
+            "fontSize": 18,
+            "color": "#888888",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        }
+      ],
+      "metadata": {
+        "layout": "title_subtitle",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    {
+      "id": "slide-1464de4d",
+      "elements": [
+        {
+          "id": "elem-9f677d38",
+          "type": "textbox",
+          "content": "核心特性",
+          "style": {
+            "x": 50,
+            "y": 30,
+            "width": 1100,
+            "height": 80,
+            "fontSize": 42,
+            "fontWeight": "bold",
+            "color": "#1a1a2e"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-a3d26c3e",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 50,
+            "y": 110,
+            "width": 150,
+            "height": 4,
+            "fill": "#3b82f6"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-adbb1a20",
+          "type": "textbox",
+          "content": "🎨 可视化编辑\n\n所见即所得的编辑体验，拖拽即可调整元素位置和大小",
+          "style": {
+            "x": 50,
+            "y": 150,
+            "width": 520,
+            "height": 150,
+            "fontSize": 20,
+            "color": "#333333",
+            "lineHeight": 1.6
+          },
+          "animation": {
+            "type": "slideInLeft",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-423d696f",
+          "type": "textbox",
+          "content": "📐 智能参考线\n\n自动对齐元素，让排版更加精准美观",
+          "style": {
+            "x": 630,
+            "y": 150,
+            "width": 520,
+            "height": 150,
+            "fontSize": 20,
+            "color": "#333333",
+            "lineHeight": 1.6
+          },
+          "animation": {
+            "type": "slideInRight",
+            "duration": 0.5,
+            "delay": 0.2
+          }
+        },
+        {
+          "id": "elem-b9447601",
+          "type": "textbox",
+          "content": "🎬 动画效果\n\n支持多种入场动画，让演示更生动",
+          "style": {
+            "x": 50,
+            "y": 350,
+            "width": 520,
+            "height": 150,
+            "fontSize": 20,
+            "color": "#333333",
+            "lineHeight": 1.6
+          },
+          "animation": {
+            "type": "slideInLeft",
+            "duration": 0.5,
+            "delay": 0.4
+          }
+        },
+        {
+          "id": "elem-b4b9aeba",
+          "type": "textbox",
+          "content": "💾 多格式导出\n\n支持导出为 HTML、单文件等多种格式",
+          "style": {
+            "x": 630,
+            "y": 350,
+            "width": 520,
+            "height": 150,
+            "fontSize": 20,
+            "color": "#333333",
+            "lineHeight": 1.6
+          },
+          "animation": {
+            "type": "slideInRight",
+            "duration": 0.5,
+            "delay": 0.6
+          }
+        }
+      ],
+      "metadata": {
+        "layout": "title_content",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    {
+      "id": "slide-6263017a",
+      "elements": [
+        {
+          "id": "elem-083ea701",
+          "type": "textbox",
+          "content": "技术架构",
+          "style": {
+            "x": 50,
+            "y": 30,
+            "width": 1100,
+            "height": 70,
+            "fontSize": 42,
+            "fontWeight": "bold",
+            "color": "#1a1a2e"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-d2946894",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 50,
+            "y": 100,
+            "width": 150,
+            "height": 4,
+            "fill": "#3b82f6"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-fff9b32d",
+          "type": "textbox",
+          "content": "前端技术栈",
+          "style": {
+            "x": 50,
+            "y": 140,
+            "width": 500,
+            "height": 50,
+            "fontSize": 24,
+            "fontWeight": "bold",
+            "color": "#3b82f6"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-5385f537",
+          "type": "textbox",
+          "content": "• HTML5 / CSS3 / JavaScript\n• Fabric.js 画布引擎\n• 响应式设计",
+          "style": {
+            "x": 50,
+            "y": 200,
+            "width": 500,
+            "height": 150,
+            "fontSize": 18,
+            "color": "#333333",
+            "lineHeight": 1.8
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-e9023294",
+          "type": "textbox",
+          "content": "后端技术栈",
+          "style": {
+            "x": 650,
+            "y": 140,
+            "width": 500,
+            "height": 50,
+            "fontSize": 24,
+            "fontWeight": "bold",
+            "color": "#10b981"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-8eaa07fd",
+          "type": "textbox",
+          "content": "• Python 3.7+\n• PyQt6 GUI 框架\n• QWebChannel 通信",
+          "style": {
+            "x": 650,
+            "y": 200,
+            "width": 500,
+            "height": 150,
+            "fontSize": 18,
+            "color": "#333333",
+            "lineHeight": 1.8
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-6b65fc3a",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 200,
+            "y": 400,
+            "width": 800,
+            "height": 80,
+            "fill": "#f0f9ff",
+            "strokeWidth": 2,
+            "stroke": "#3b82f6",
+            "borderRadius": 10
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-eeeac90a",
+          "type": "textbox",
+          "content": "前后端分离架构，通过 QWebChannel 实现双向通信",
+          "style": {
+            "x": 220,
+            "y": 420,
+            "width": 760,
+            "height": 40,
+            "fontSize": 18,
+            "color": "#1e40af",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        }
+      ],
+      "metadata": {
+        "layout": "two_column",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    {
+      "id": "slide-33cf3f2b",
+      "elements": [
+        {
+          "id": "elem-ea25fafc",
+          "type": "textbox",
+          "content": "丰富的元素类型",
+          "style": {
+            "x": 50,
+            "y": 30,
+            "width": 1100,
+            "height": 70,
+            "fontSize": 42,
+            "fontWeight": "bold",
+            "color": "#1a1a2e"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-4459a1b9",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 50,
+            "y": 100,
+            "width": 150,
+            "height": 4,
+            "fill": "#3b82f6"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-31ac57ae",
+          "type": "textbox",
+          "content": "📝 文本框",
+          "style": {
+            "x": 50,
+            "y": 140,
+            "width": 280,
+            "height": 40,
+            "fontSize": 20,
+            "fontWeight": "bold",
+            "color": "#333333"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-9767fae1",
+          "type": "textbox",
+          "content": "支持富文本编辑\n可调整字体、颜色、对齐方式",
+          "style": {
+            "x": 50,
+            "y": 190,
+            "width": 280,
+            "height": 80,
+            "fontSize": 16,
+            "color": "#666666",
+            "lineHeight": 1.5
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-a92281f0",
+          "type": "textbox",
+          "content": "⬛ 形状",
+          "style": {
+            "x": 350,
+            "y": 140,
+            "width": 280,
+            "height": 40,
+            "fontSize": 20,
+            "fontWeight": "bold",
+            "color": "#333333"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-6a27047c",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 350,
+            "y": 190,
+            "width": 100,
+            "height": 100,
+            "fill": "#3b82f6",
+            "borderRadius": 10
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-0fa0e2e7",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 470,
+            "y": 190,
+            "width": 100,
+            "height": 100,
+            "fill": "#10b981",
+            "borderRadius": 50
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-72ee6e5e",
+          "type": "textbox",
+          "content": "🔘 按钮",
+          "style": {
+            "x": 650,
+            "y": 140,
+            "width": 280,
+            "height": 40,
+            "fontSize": 20,
+            "fontWeight": "bold",
+            "color": "#333333"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-a1e3c1c0",
+          "type": "button",
+          "content": "点击按钮",
+          "style": {
+            "x": 650,
+            "y": 200,
+            "width": 150,
+            "height": 50,
+            "fill": "#3b82f6",
+            "color": "#ffffff",
+            "fontSize": 16,
+            "borderRadius": 8
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-48e09225",
+          "type": "button",
+          "content": "次要按钮",
+          "style": {
+            "x": 820,
+            "y": 200,
+            "width": 150,
+            "height": 50,
+            "fill": "#e5e7eb",
+            "color": "#333333",
+            "fontSize": 16,
+            "borderRadius": 8
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-593c23e1",
+          "type": "textbox",
+          "content": "🖼️ 图片",
+          "style": {
+            "x": 950,
+            "y": 140,
+            "width": 200,
+            "height": 40,
+            "fontSize": 20,
+            "fontWeight": "bold",
+            "color": "#333333"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-8f9cd18a",
+          "type": "textbox",
+          "content": "支持插入图片\n可调整大小和位置",
+          "style": {
+            "x": 950,
+            "y": 190,
+            "width": 200,
+            "height": 80,
+            "fontSize": 16,
+            "color": "#666666",
+            "lineHeight": 1.5
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        }
+      ],
+      "metadata": {
+        "layout": "blank",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    {
+      "id": "slide-c1dca5b3",
+      "elements": [
+        {
+          "id": "elem-a4e6d5fc",
+          "type": "textbox",
+          "content": "动画效果展示",
+          "style": {
+            "x": 50,
+            "y": 30,
+            "width": 1100,
+            "height": 70,
+            "fontSize": 42,
+            "fontWeight": "bold",
+            "color": "#1a1a2e"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-727605da",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 50,
+            "y": 100,
+            "width": 150,
+            "height": 4,
+            "fill": "#3b82f6"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-dc62c095",
+          "type": "textbox",
+          "content": "淡入效果",
+          "style": {
+            "x": 100,
+            "y": 200,
+            "width": 200,
+            "height": 100,
+            "fontSize": 24,
+            "color": "#3b82f6",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "fadeIn",
+            "duration": 1.0,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-8a49bbea",
+          "type": "textbox",
+          "content": "左侧滑入",
+          "style": {
+            "x": 350,
+            "y": 200,
+            "width": 200,
+            "height": 100,
+            "fontSize": 24,
+            "color": "#10b981",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "slideInLeft",
+            "duration": 0.8,
+            "delay": 0.3
+          }
+        },
+        {
+          "id": "elem-19ff16cc",
+          "type": "textbox",
+          "content": "右侧滑入",
+          "style": {
+            "x": 600,
+            "y": 200,
+            "width": 200,
+            "height": 100,
+            "fontSize": 24,
+            "color": "#f59e0b",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "slideInRight",
+            "duration": 0.8,
+            "delay": 0.6
+          }
+        },
+        {
+          "id": "elem-f533a70c",
+          "type": "textbox",
+          "content": "缩放进入",
+          "style": {
+            "x": 850,
+            "y": 200,
+            "width": 200,
+            "height": 100,
+            "fontSize": 24,
+            "color": "#ef4444",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "scaleIn",
+            "duration": 0.6,
+            "delay": 0.9
+          }
+        },
+        {
+          "id": "elem-1e3179c4",
+          "type": "textbox",
+          "content": "下方滑入",
+          "style": {
+            "x": 350,
+            "y": 400,
+            "width": 200,
+            "height": 100,
+            "fontSize": 24,
+            "color": "#8b5cf6",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "slideInUp",
+            "duration": 0.8,
+            "delay": 1.2
+          }
+        },
+        {
+          "id": "elem-9ad44d88",
+          "type": "textbox",
+          "content": "上方滑入",
+          "style": {
+            "x": 600,
+            "y": 400,
+            "width": 200,
+            "height": 100,
+            "fontSize": 24,
+            "color": "#ec4899",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "slideInDown",
+            "duration": 0.8,
+            "delay": 1.5
+          }
+        }
+      ],
+      "metadata": {
+        "layout": "blank",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    {
+      "id": "slide-ad3569e2",
+      "elements": [
+        {
+          "id": "elem-017841d4",
+          "type": "textbox",
+          "content": "快捷键一览",
+          "style": {
+            "x": 50,
+            "y": 30,
+            "width": 1100,
+            "height": 70,
+            "fontSize": 42,
+            "fontWeight": "bold",
+            "color": "#1a1a2e"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-3a4144a9",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 50,
+            "y": 100,
+            "width": 150,
+            "height": 4,
+            "fill": "#3b82f6"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-7bc195f3",
+          "type": "textbox",
+          "content": "编辑操作",
+          "style": {
+            "x": 50,
+            "y": 140,
+            "width": 500,
+            "height": 40,
+            "fontSize": 22,
+            "fontWeight": "bold",
+            "color": "#3b82f6"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-aa3b7696",
+          "type": "textbox",
+          "content": "Ctrl + Z    撤销\nCtrl + Y    重做\nCtrl + C    复制\nCtrl + V    粘贴\nDelete      删除选中元素",
+          "style": {
+            "x": 50,
+            "y": 190,
+            "width": 500,
+            "height": 200,
+            "fontSize": 18,
+            "color": "#333333",
+            "lineHeight": 2.0,
+            "fontFamily": "Consolas, monospace"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-e1f92b65",
+          "type": "textbox",
+          "content": "放映操作",
+          "style": {
+            "x": 650,
+            "y": 140,
+            "width": 500,
+            "height": 40,
+            "fontSize": 22,
+            "fontWeight": "bold",
+            "color": "#10b981"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-d703ff32",
+          "type": "textbox",
+          "content": "F5          开始放映\n→ / 空格    下一页\n←           上一页\nESC         退出放映\nF11         全屏切换",
+          "style": {
+            "x": 650,
+            "y": 190,
+            "width": 500,
+            "height": 200,
+            "fontSize": 18,
+            "color": "#333333",
+            "lineHeight": 2.0,
+            "fontFamily": "Consolas, monospace"
+          },
+          "animation": {
+            "type": "none",
+            "duration": 0.5,
+            "delay": 0
+          }
+        }
+      ],
+      "metadata": {
+        "layout": "two_column",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    {
+      "id": "slide-4237c558",
+      "elements": [
+        {
+          "id": "elem-767f9aa9",
+          "type": "textbox",
+          "content": "感谢使用",
+          "style": {
+            "x": 100,
+            "y": 200,
+            "width": 1000,
+            "height": 100,
+            "fontSize": 56,
+            "fontWeight": "bold",
+            "color": "#1a1a2e",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "fadeIn",
+            "duration": 0.8,
+            "delay": 0
+          }
+        },
+        {
+          "id": "elem-0ae6cd9a",
+          "type": "textbox",
+          "content": "HTML PPT 编辑器",
+          "style": {
+            "x": 200,
+            "y": 320,
+            "width": 800,
+            "height": 50,
+            "fontSize": 28,
+            "color": "#3b82f6",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "fadeIn",
+            "duration": 0.8,
+            "delay": 0.3
+          }
+        },
+        {
+          "id": "elem-d61c077b",
+          "type": "shape",
+          "content": null,
+          "style": {
+            "x": 450,
+            "y": 400,
+            "width": 300,
+            "height": 6,
+            "fill": "#3b82f6"
+          },
+          "animation": {
+            "type": "scaleIn",
+            "duration": 0.5,
+            "delay": 0.6
+          }
+        },
+        {
+          "id": "elem-8a148531",
+          "type": "textbox",
+          "content": "开始创建您的精彩演示吧！",
+          "style": {
+            "x": 200,
+            "y": 450,
+            "width": 800,
+            "height": 50,
+            "fontSize": 20,
+            "color": "#666666",
+            "textAlign": "center"
+          },
+          "animation": {
+            "type": "fadeIn",
+            "duration": 0.8,
+            "delay": 0.9
+          }
+        }
+      ],
+      "metadata": {
+        "layout": "section_header",
+        "backgroundColor": "#ffffff"
+      }
+    }
+  ]
+}
