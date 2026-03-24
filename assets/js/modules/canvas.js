@@ -619,7 +619,8 @@ const CanvasManager = {
 
         existingObjects.forEach(obj => {
             if (obj.elementId && !newIds.has(obj.elementId)) {
-                this.canvas.remove(obj);
+                // 【修复】删除元素时正确释放资源
+                this.removeObject(obj);
             }
         });
 
@@ -697,6 +698,7 @@ const CanvasManager = {
                         existingObj.set('top', top);
                         existingObj.set('width', width);
                         existingObj.set('height', height);
+                        existingObj.set('angle', style.angle || 0);
                         existingObj.setCoords();
                         
                         existingObj.set('text', element.content || '');
@@ -711,6 +713,7 @@ const CanvasManager = {
                 } else {
                     existingObj.set('left', left);
                     existingObj.set('top', top);
+                    existingObj.set('angle', style.angle || 0);
                     
                     if (element.type === 'shape' || element.type === 'button') {
                         existingObj.set('width', width);
@@ -718,10 +721,25 @@ const CanvasManager = {
                         existingObj.set('fill', style.fill || '#007acc');
                     } else if (element.type === 'media' || element.type === 'image') {
                         if (existingObj.type === 'image') {
-                            const scaleX = width / (existingObj.width || width);
-                            const scaleY = height / (existingObj.height || height);
-                            existingObj.set('scaleX', scaleX);
-                            existingObj.set('scaleY', scaleY);
+                            // 【修复】使用 contain 模式更新图片
+                            const imgWidth = existingObj.width || width;
+                            const imgHeight = existingObj.height || height;
+                            const imgRatio = imgWidth / imgHeight;
+                            const boxRatio = width / height;
+                            
+                            let scale, offsetX = 0, offsetY = 0;
+                            if (imgRatio > boxRatio) {
+                                scale = width / imgWidth;
+                                offsetY = (height - imgHeight * scale) / 2;
+                            } else {
+                                scale = height / imgHeight;
+                                offsetX = (width - imgWidth * scale) / 2;
+                            }
+                            
+                            existingObj.set('scaleX', scale);
+                            existingObj.set('scaleY', scale);
+                            existingObj.set('left', left + offsetX);
+                            existingObj.set('top', top + offsetY);
                         }
                     }
                     
@@ -895,14 +913,20 @@ const CanvasManager = {
                             textAlign: style.textAlign || 'left',
                             lineHeight: style.lineHeight || 1.5,
                             backgroundColor: style.backgroundColor || 'transparent',
-                            lockScalingY: false,
+                            lockScalingX: true,
+                            lockScalingY: true,
                             splitByGrapheme: false
                         });
                         obj.setControlsVisibility({
-                            mt: true,
-                            mb: true,
-                            ml: true,
-                            mr: true
+                            mt: false,
+                            mb: false,
+                            ml: false,
+                            mr: false,
+                            tl: false,
+                            tr: false,
+                            bl: false,
+                            br: false,
+                            mtr: true
                         });
                     } else {
                         obj = new fabric.IText(element.content || '文本', {
@@ -915,7 +939,20 @@ const CanvasManager = {
                             fontStyle: style.fontStyle || 'normal',
                             textAlign: style.textAlign || 'left',
                             lineHeight: style.lineHeight || 1.5,
-                            backgroundColor: style.backgroundColor || 'transparent'
+                            backgroundColor: style.backgroundColor || 'transparent',
+                            lockScalingX: true,
+                            lockScalingY: true
+                        });
+                        obj.setControlsVisibility({
+                            mt: false,
+                            mb: false,
+                            ml: false,
+                            mr: false,
+                            tl: false,
+                            tr: false,
+                            bl: false,
+                            br: false,
+                            mtr: true
                         });
                     }
                     break;
@@ -963,7 +1000,20 @@ const CanvasManager = {
                         height: height,
                         fill: style.fill || '#3b82f6',
                         rx: 4,
-                        ry: 4
+                        ry: 4,
+                        lockScalingX: true,
+                        lockScalingY: true
+                    });
+                    obj.setControlsVisibility({
+                        mt: false,
+                        mb: false,
+                        ml: false,
+                        mr: false,
+                        tl: false,
+                        tr: false,
+                        bl: false,
+                        br: false,
+                        mtr: true
                     });
                     break;
                     
@@ -983,11 +1033,28 @@ const CanvasManager = {
                         if (imgSrc.startsWith('data:') || imgSrc.startsWith('http')) {
                             // 异步加载图片
                             fabric.Image.fromURL(imgSrc, (img) => {
+                                // 【修复】使用 contain 模式：保持比例，在框内完整显示
+                                const imgWidth = img.width || width;
+                                const imgHeight = img.height || height;
+                                const imgRatio = imgWidth / imgHeight;
+                                const boxRatio = width / height;
+                                
+                                let scale, offsetX = 0, offsetY = 0;
+                                if (imgRatio > boxRatio) {
+                                    // 图片更宽，以宽度为准
+                                    scale = width / imgWidth;
+                                    offsetY = (height - imgHeight * scale) / 2;
+                                } else {
+                                    // 图片更高，以高度为准
+                                    scale = height / imgHeight;
+                                    offsetX = (width - imgWidth * scale) / 2;
+                                }
+                                
                                 img.set({
-                                    left: left,
-                                    top: top,
-                                    scaleX: width / (img.width || width),
-                                    scaleY: height / (img.height || height)
+                                    left: left + offsetX,
+                                    top: top + offsetY,
+                                    scaleX: scale,
+                                    scaleY: scale
                                 });
                                 img.elementId = element.id;
                                 img.elementData = element;
@@ -1167,6 +1234,11 @@ const CanvasManager = {
                 obj.elementId = element.id;
                 obj.elementData = element;
                 
+                // 设置旋转角度
+                if (style.angle) {
+                    obj.set('angle', style.angle);
+                }
+                
                 // 设置锁定属性
                 if (element.locked) {
                     obj.set('selectable', false);
@@ -1334,21 +1406,18 @@ const CanvasManager = {
             // 单选情况
             if (!obj.elementId) return;
             
-            const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
-            const element = slide?.elements.find(el => el.id === obj.elementId);
+            const element = Utils.getElement(state, obj.elementId);
             if (!element) return;
+            
+            // 获取元素的原始位置（旋转前的位置）
+            const originalLeft = element.style.x;
+            const originalTop = element.style.y;
             
             let newWidth, newHeight;
             
-            if (element.type === 'textbox' && element.textMode === 'fixed') {
-                newWidth = Math.round(obj.width * (obj.scaleX || 1));
-                newHeight = Math.round((obj.height || element.style.height) * (obj.scaleY || 1));
-                
-                obj.set({
-                    width: newWidth,
-                    scaleX: 1,
-                    scaleY: 1
-                });
+            if (Utils.isTextElement(element)) {
+                newWidth = element.style.width;
+                newHeight = element.style.height;
             } else {
                 newWidth = Math.round((obj.width || element.style.width) * (obj.scaleX || 1));
                 newHeight = Math.round((obj.height || element.style.height) * (obj.scaleY || 1));
@@ -1361,13 +1430,28 @@ const CanvasManager = {
                 });
             }
             
+            // 保存位置：如果只是旋转，保持原始位置
+            // 如果有移动，使用新位置
+            const newX = Math.round(obj.left);
+            const newY = Math.round(obj.top);
+            const newAngle = Math.round(obj.angle) || 0;
+            const oldAngle = element.style.angle || 0;
+            
+            // 判断是否只是旋转（位置变化很小，但角度变化了）
+            const positionChanged = Math.abs(newX - originalLeft) > 5 || Math.abs(newY - originalTop) > 5;
+            const angleChanged = Math.abs(newAngle - oldAngle) > 1;
+            
+            // 如果只是旋转而没有明显移动，保持原始位置
+            const finalX = (angleChanged && !positionChanged) ? originalLeft : newX;
+            const finalY = (angleChanged && !positionChanged) ? originalTop : newY;
+            
             store.updateElement(state.activeSlideId, obj.elementId, {
                 style: {
-                    x: Math.round(obj.left) || element.style.x,
-                    y: Math.round(obj.top) || element.style.y,
+                    x: finalX,
+                    y: finalY,
                     width: newWidth,
                     height: newHeight,
-                    angle: Math.round(obj.angle) || 0
+                    angle: newAngle
                 }
             });
         } finally {
@@ -1538,6 +1622,37 @@ const CanvasManager = {
         if (this.canvas) {
             this.canvas.renderAll();
         }
+    },
+    
+    /**
+     * 安全移除画布对象（正确释放资源）
+     * 
+     * @param {Object} obj - 要移除的 Fabric.js 对象
+     */
+    removeObject(obj) {
+        if (!obj || !this.canvas) return;
+        
+        // 如果是图片对象，清除图片缓存
+        if (obj.type === 'image' && obj._element) {
+            // 清除图片元素的引用
+            obj._element = null;
+        }
+        
+        // 如果是组对象，递归清理子对象
+        if (obj.type === 'group' && obj._objects) {
+            obj._objects.forEach(child => {
+                if (child.type === 'image' && child._element) {
+                    child._element = null;
+                }
+            });
+        }
+        
+        // 清除元素数据引用
+        obj.elementData = null;
+        obj.elementId = null;
+        
+        // 从画布移除
+        this.canvas.remove(obj);
     },
     
     /**

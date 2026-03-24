@@ -481,8 +481,7 @@ const Toolbar = {
                 style: { x: 100, y: 100, width: 100, height: 100, fill: '#007acc' } 
             },
             'add-image': () => {
-                const url = prompt('输入图片 URL:', 'https://picsum.photos/400/300');
-                if (url) return { type: 'media', mediaType: 'image', content: url, style: { x: 100, y: 100, width: 400, height: 300 } };
+                this.openImageModal();
                 return null;
             },
             'add-video': () => {
@@ -568,6 +567,98 @@ const Toolbar = {
         } catch (err) {
             console.error('截图失败:', err);
         }
+    },
+
+    openImageModal() {
+        const modal = document.getElementById('image-modal');
+        const urlInput = document.getElementById('image-url-input');
+        const fileInput = document.getElementById('image-file-input');
+        const preview = document.getElementById('image-preview');
+        const addBtn = document.getElementById('btn-add-image');
+        const cancelBtn = document.getElementById('btn-cancel-image');
+        
+        if (!modal) return;
+        
+        // 重置状态
+        urlInput.value = '';
+        fileInput.value = '';
+        preview.style.display = 'none';
+        preview.src = '';
+        
+        // 存储选择的图片数据
+        let selectedImageData = null;
+        let selectedImageType = 'url'; // 'url' or 'file'
+        
+        // Tab 切换
+        modal.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => {
+                modal.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                modal.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                btn.classList.add('active');
+                const tabId = btn.dataset.tab;
+                document.getElementById(tabId)?.classList.remove('hidden');
+                selectedImageType = tabId === 'image-url' ? 'url' : 'file';
+            };
+        });
+        
+        // 文件选择预览
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    selectedImageData = ev.target.result;
+                    preview.src = selectedImageData;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        
+        // 取消按钮
+        cancelBtn.onclick = () => {
+            modal.classList.add('hidden');
+        };
+        
+        // 添加按钮
+        addBtn.onclick = () => {
+            let imageContent = null;
+            
+            if (selectedImageType === 'url') {
+                imageContent = urlInput.value.trim();
+            } else {
+                imageContent = selectedImageData;
+            }
+            
+            if (imageContent) {
+                const state = this.store.getState();
+                if (state.activeSlideId) {
+                    this.store.addElement(state.activeSlideId, { 
+                        type: 'media', 
+                        mediaType: 'image', 
+                        content: imageContent, 
+                        style: { x: 100, y: 100, width: 400, height: 300 } 
+                    });
+                }
+            }
+            
+            modal.classList.add('hidden');
+        };
+        
+        // 点击关闭按钮
+        modal.querySelector('.modal-close')?.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+        
+        // 点击背景关闭
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        };
+        
+        modal.classList.remove('hidden');
+        urlInput.focus();
     },
 
     openAlbum() {

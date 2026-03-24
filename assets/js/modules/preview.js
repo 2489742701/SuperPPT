@@ -50,6 +50,9 @@ const Preview = {
     /** @type {boolean} 是否启用点击切换 */
     clickAdvanceEnabled: true,
     
+    /** @type {boolean} 是否显示结束屏幕 */
+    showEndScreen: false,
+    
     /** @type {boolean} 是否启用空格切换 */
     spaceAdvanceEnabled: true,
     
@@ -107,6 +110,11 @@ const Preview = {
         
         if (previewCurrent) previewCurrent.textContent = slideIndex + 1;
         if (previewTotal) previewTotal.textContent = state.presentation.slides.length;
+        
+        // 如果正在显示结束屏幕，不要重新渲染幻灯片
+        if (this.showEndScreen) {
+            return;
+        }
         
         if (slide && previewSlide) {
             try {
@@ -466,8 +474,17 @@ const Preview = {
     nextSlide() {
         if (!this.store || this.isTransitioning) return;
         const state = this.store.getState();
+        
+        if (this.showEndScreen) {
+            this.exitPreview();
+            return;
+        }
+        
         if (state.previewSlideIndex < state.presentation.slides.length - 1) {
             this.transitionTo(state.previewSlideIndex + 1, 'next');
+        } else {
+            this.showEndScreen = true;
+            this.renderEndScreen();
         }
     },
 
@@ -476,6 +493,13 @@ const Preview = {
      */
     prevSlide() {
         if (!this.store || this.isTransitioning) return;
+        
+        if (this.showEndScreen) {
+            this.showEndScreen = false;
+            this.hideEndScreen();
+            return;
+        }
+        
         const state = this.store.getState();
         if (state.previewSlideIndex > 0) {
             this.transitionTo(state.previewSlideIndex - 1, 'prev');
@@ -553,7 +577,72 @@ const Preview = {
      */
     exitPreview() {
         if (!this.store) return;
+        this.showEndScreen = false;
+        this.hideEndScreen();
         this.store.setPreview(false);
+    },
+
+    /**
+     * 渲染结束屏幕
+     */
+    renderEndScreen() {
+        const previewSlide = document.getElementById('preview-slide');
+        if (!previewSlide) return;
+        
+        previewSlide.innerHTML = `
+            <div class="preview-end-screen" style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                color: white;
+                cursor: pointer;
+                user-select: none;
+            " onclick="Preview.exitPreview()">
+                <div style="
+                    font-size: 72px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                    animation: fadeInUp 0.5s ease-out;
+                ">演示结束</div>
+                <div style="
+                    font-size: 24px;
+                    opacity: 0.7;
+                    animation: fadeInUp 0.5s ease-out 0.3s both;
+                ">单击任意位置退出放映</div>
+                <div style="
+                    margin-top: 40px;
+                    font-size: 16px;
+                    opacity: 0.5;
+                    animation: fadeInUp 0.5s ease-out 0.6s both;
+                ">按 ESC 或 ← 可返回上一页</div>
+            </div>
+            <style>
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            </style>
+        `;
+    },
+
+    /**
+     * 隐藏结束屏幕
+     */
+    hideEndScreen() {
+        const endScreen = document.querySelector('.preview-end-screen');
+        if (endScreen) {
+            endScreen.remove();
+        }
     },
 
     /**

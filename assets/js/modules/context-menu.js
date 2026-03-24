@@ -46,14 +46,17 @@ const ContextMenu = {
         const store = window.editor?.store;
         const state = store?.getState();
         let isLocked = false;
+        let isTextElement = false;
         
         if (state && elementId) {
-            const slide = state.presentation.slides.find(s => s.id === state.activeSlideId);
-            const element = slide?.elements.find(e => e.id === elementId);
+            const slide = Utils.getActiveSlide(state);
+            const element = Utils.getElementFromSlide(slide, elementId);
             isLocked = element && element.locked;
+            isTextElement = Utils.isTextElement(element);
             
             const lockBtn = menu.querySelector('[data-action="lock"]');
             const unlockBtn = menu.querySelector('[data-action="unlock"]');
+            const editTextBtn = menu.querySelector('[data-action="edit-text"]');
             
             if (isLocked) {
                 if (lockBtn) lockBtn.classList.add('hidden');
@@ -62,10 +65,18 @@ const ContextMenu = {
                 if (lockBtn) lockBtn.classList.remove('hidden');
                 if (unlockBtn) unlockBtn.classList.add('hidden');
             }
+            
+            if (editTextBtn) {
+                if (isTextElement) {
+                    editTextBtn.classList.remove('hidden');
+                } else {
+                    editTextBtn.classList.add('hidden');
+                }
+            }
         }
         
         // 禁用锁定元素的其他操作（除了解锁）
-        const otherActions = ['bring-forward', 'send-backward', 'copy', 'reset', 'hyperlink', 'delete', 'group', 'ungroup'];
+        const otherActions = ['bring-forward', 'send-backward', 'copy', 'reset', 'hyperlink', 'delete', 'group', 'ungroup', 'edit-text'];
         otherActions.forEach(action => {
             const btn = menu.querySelector(`[data-action="${action}"]`);
             if (btn) {
@@ -177,11 +188,23 @@ const ContextMenu = {
                 }
                 break;
                 
+            case 'edit-text':
+                // 修改文字
+                if (this.elementId) {
+                    const el = Utils.getElement(state, this.elementId);
+                    if (Utils.isTextElement(el)) {
+                        const newText = prompt('请输入新的文字内容：', el.content || '');
+                        if (newText !== null) {
+                            store.updateElement(state.activeSlideId, this.elementId, { content: newText });
+                        }
+                    }
+                }
+                break;
+                
             case 'hyperlink':
                 // 设置超链接
                 if (this.elementId) {
-                    const slideEl = state.presentation.slides.find(s => s.id === state.activeSlideId);
-                    const el = slideEl?.elements.find(e => e.id === this.elementId);
+                    const el = Utils.getElement(state, this.elementId);
                     if (el && window.LinkModal) {
                         window.LinkModal.open(el.style.link || '', (value) => {
                             store.updateElement(state.activeSlideId, this.elementId, { style: { link: value } });

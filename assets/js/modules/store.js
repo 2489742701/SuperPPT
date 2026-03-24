@@ -1,7 +1,3 @@
-function generateId() {
-    return 'id-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-}
-
 class EditorStore {
     constructor() {
         this.presentation = this.createInitialPresentation();
@@ -10,7 +6,7 @@ class EditorStore {
         this.selectedElementIds = [];
         this.clipboard = null;
         this.slideClipboard = null;
-        this.history = [JSON.parse(JSON.stringify(this.presentation))];
+        this.history = [Utils.deepClone(this.presentation)];
         this.historyIndex = 0;
         this.language = 'zh';
         this.panels = {
@@ -44,13 +40,13 @@ class EditorStore {
     }
 
     createInitialPresentation() {
-        const slideId = generateId();
+        const slideId = Utils.generateId();
         return {
             settings: { advanceMode: 'click', smartGuidesEnabled: true },
             slides: [{
                 id: slideId,
                 elements: [{
-                    id: generateId(),
+                    id: Utils.generateId(),
                     type: 'textbox',
                     content: '点击此处输入标题',
                     textMode: 'fixed',
@@ -63,7 +59,7 @@ class EditorStore {
                     },
                     animation: { type: 'none', duration: 0.5, delay: 0 }
                 }, {
-                    id: generateId(),
+                    id: Utils.generateId(),
                     type: 'textbox',
                     content: '点击此处输入副标题',
                     textMode: 'fixed',
@@ -109,7 +105,7 @@ class EditorStore {
 
     pushHistory() {
         const newHistory = this.history.slice(0, this.historyIndex + 1);
-        newHistory.push(JSON.parse(JSON.stringify(this.presentation)));
+        newHistory.push(Utils.deepClone(this.presentation));
         if (newHistory.length > 8) newHistory.shift();
         this.history = newHistory;
         this.historyIndex = newHistory.length - 1;
@@ -118,7 +114,7 @@ class EditorStore {
     undo() {
         if (this.historyIndex > 0) {
             this.historyIndex--;
-            this.presentation = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+            this.presentation = Utils.deepClone(this.history[this.historyIndex]);
             this.activeElementId = null;
             this.notify();
         }
@@ -127,14 +123,14 @@ class EditorStore {
     redo() {
         if (this.historyIndex < this.history.length - 1) {
             this.historyIndex++;
-            this.presentation = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+            this.presentation = Utils.deepClone(this.history[this.historyIndex]);
             this.activeElementId = null;
             this.notify();
         }
     }
 
     addSlide() {
-        const newSlideId = generateId();
+        const newSlideId = Utils.generateId();
         this.presentation.slides.push({ id: newSlideId, elements: [] });
         this.pushHistory();
         this.activeSlideId = newSlideId;
@@ -250,11 +246,11 @@ class EditorStore {
             }
         };
         
-        const newSlideId = generateId();
+        const newSlideId = Utils.generateId();
         const template = templates[layout] || templates.title_subtitle;
         const elements = template.elements.map(el => ({
             ...el,
-            id: generateId(),
+            id: Utils.generateId(),
             style: { opacity: 1, strokeWidth: 0, angle: 0, skewX: 0, skewY: 0, ...el.style },
             animation: { type: 'none', duration: 0.5, delay: 0 }
         }));
@@ -311,7 +307,7 @@ class EditorStore {
         
         slide.elements = template.elements.map(el => ({
             ...el,
-            id: generateId(),
+            id: Utils.generateId(),
             style: { opacity: 1, strokeWidth: 0, angle: 0, skewX: 0, skewY: 0, ...el.style },
             animation: { type: 'none', duration: 0.5, delay: 0 }
         }));
@@ -324,14 +320,14 @@ class EditorStore {
     copySlide(slideId) {
         const slide = this.presentation.slides.find(s => s.id === slideId);
         if (!slide) return;
-        this.slideClipboard = JSON.parse(JSON.stringify(slide));
+        this.slideClipboard = Utils.deepClone(slide);
     }
     
     pasteSlide() {
         if (!this.slideClipboard) return;
-        const newSlide = JSON.parse(JSON.stringify(this.slideClipboard));
-        newSlide.id = generateId();
-        newSlide.elements.forEach(el => el.id = generateId());
+        const newSlide = Utils.deepClone(this.slideClipboard);
+        newSlide.id = Utils.generateId();
+        newSlide.elements.forEach(el => el.id = Utils.generateId());
         
         const currentIndex = this.presentation.slides.findIndex(s => s.id === this.activeSlideId);
         const insertIndex = currentIndex >= 0 ? currentIndex + 1 : this.presentation.slides.length;
@@ -363,9 +359,9 @@ class EditorStore {
         const index = this.presentation.slides.findIndex(s => s.id === id);
         if (index === -1) return;
         const slide = this.presentation.slides[index];
-        const newSlide = JSON.parse(JSON.stringify(slide));
-        newSlide.id = generateId();
-        newSlide.elements.forEach(el => el.id = generateId());
+        const newSlide = Utils.deepClone(slide);
+        newSlide.id = Utils.generateId();
+        newSlide.elements.forEach(el => el.id = Utils.generateId());
         this.presentation.slides.splice(index + 1, 0, newSlide);
         
         // 复制缩略图快照
@@ -396,7 +392,7 @@ class EditorStore {
         if (!slide) return;
         const newElement = {
             ...element,
-            id: generateId(),
+            id: Utils.generateId(),
             style: { opacity: 1, strokeWidth: 0, angle: 0, skewX: 0, skewY: 0, ...element.style },
             animation: element.animation || { type: 'none', duration: 0.5, delay: 0 }
         };
@@ -546,14 +542,37 @@ class EditorStore {
     }
 
     copyElement(element) {
-        this.clipboard = JSON.parse(JSON.stringify(element));
+        // 清理旧剪贴板数据（防止内存泄漏）
+        this.clearClipboard();
+        this.clipboard = Utils.deepClone(element);
+    }
+    
+    clearClipboard() {
+        if (this.clipboard) {
+            // 清除图片内容引用（如果是 base64 数据）
+            if (this.clipboard.type === 'media' && this.clipboard.content) {
+                this.clipboard.content = null;
+            }
+            this.clipboard = null;
+        }
+        if (this.slideClipboard) {
+            // 清除幻灯片剪贴板中的图片内容
+            if (this.slideClipboard.elements) {
+                this.slideClipboard.elements.forEach(el => {
+                    if (el.type === 'media' && el.content) {
+                        el.content = null;
+                    }
+                });
+            }
+            this.slideClipboard = null;
+        }
     }
 
     pasteElement(slideId) {
         if (!this.clipboard) return;
         const newElement = {
             ...this.clipboard,
-            id: generateId(),
+            id: Utils.generateId(),
             locked: false,
             style: { ...this.clipboard.style, x: this.clipboard.style.x + 20, y: this.clipboard.style.y + 20 }
         };
@@ -872,7 +891,7 @@ class EditorStore {
         if (!slide) return;
         const newElement = {
             ...element,
-            id: generateId(),
+            id: Utils.generateId(),
             style: { opacity: 1, strokeWidth: 0, angle: 0, skewX: 0, skewY: 0, ...element.style },
             animation: element.animation || { type: 'none', duration: 0.5, delay: 0 }
         };
@@ -961,7 +980,7 @@ class EditorStore {
         this.presentation = data;
         this.activeSlideId = data.slides[0]?.id || null;
         this.activeElementId = null;
-        this.history = [JSON.parse(JSON.stringify(data))];
+        this.history = [Utils.deepClone(data)];
         this.historyIndex = 0;
         this.notify();
     }
@@ -969,7 +988,7 @@ class EditorStore {
     newPresentation() {
         const newPres = {
             slides: [{
-                id: 'slide-' + Math.random().toString(36).substr(2, 9),
+                id: Utils.generateId(),
                 elements: [],
                 metadata: {
                     backgroundColor: '#ffffff',
@@ -994,11 +1013,10 @@ class EditorStore {
         this.presentation = newPres;
         this.activeSlideId = newPres.slides[0].id;
         this.activeElementId = null;
-        this.history = [JSON.parse(JSON.stringify(newPres))];
+        this.history = [Utils.deepClone(newPres)];
         this.historyIndex = 0;
         this.notify();
     }
 }
 
 window.EditorStore = EditorStore;
-window.generateId = generateId;
